@@ -1,0 +1,2937 @@
+﻿<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0a0e1a">
+<title>月球基地 · LUNAR COLONY</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{width:100%;height:100%;overflow:hidden;background:#060b14;font-family:'Courier New','Consolas',monospace;touch-action:none;user-select:none;-webkit-user-select:none}
+:root{
+  --bg:#060b14;--panel:#0d1424;--panel2:#111c30;--border:#26324a;
+  --text:#dae2f0;--dim:#6b7a9c;--accent:#f0c040;
+  --good:#3ae090;--bad:#f04e4e;
+  --c-energy:#f0c040;--c-oxygen:#4cb8f4;--c-mineral:#b480f0;
+  --c-food:#60d870;--c-credit:#f0d070;--c-research:#4cb8f4;
+  --fui-cyan:#00e5ff;--fui-amber:#f0b030;--fui-green:#00e888;
+  --fui-red:#ff3040;--fui-glow:rgba(240,192,64,0.15);
+}
+#wrap{position:fixed;inset:0;margin:auto;width:100%;max-width:440px;height:100%;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 0 60px rgba(0,10,30,.9),inset 0 0 80px rgba(0,180,255,.03)}
+#topbar{flex:0 0 auto;background:linear-gradient(180deg,#0e182e,#080e1c);border-bottom:1px solid var(--fui-cyan);border-bottom-width:1px;border-image:linear-gradient(90deg,transparent,#00e5ff44,transparent) 1;padding:5px 7px 6px;position:relative}
+#resrow{display:grid;grid-template-columns:repeat(4,1fr);gap:2px 4px;font-size:9px;line-height:1.3}
+.res{display:flex;align-items:center;gap:1px}
+.res .ic{width:10px;height:10px;flex:0 0 auto;border-radius:1px;image-rendering:pixelated;image-rendering:crisp-edges}
+.res .v{font-weight:bold;color:var(--text)}
+.res .c{color:var(--dim);font-size:8px}
+#datebar{display:flex;justify-content:space-between;align-items:center;margin-top:4px;font-size:10px;color:var(--dim)}
+#datebar .day{color:var(--accent);font-weight:bold;font-size:11px}
+#moralebar{display:flex;align-items:center;gap:4px}
+#moralebar .ml{width:50px;height:6px;background:#060b14;border:1px solid #1e2a40;overflow:hidden}
+#moralebar .mf{height:100%;background:var(--good);transition:width .3s,background .3s}
+#game-wrap{flex:1 1 auto;position:relative;background:#0c1226;overflow:hidden}
+#game{position:absolute;inset:0;width:100%;height:100%;image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+#bottombar{flex:0 0 auto;background:linear-gradient(0deg,#0e182e,#080e1c);border-top:1px solid #26324a;padding:5px 6px 6px;display:flex;flex-direction:column;gap:5px}
+#infobar{background:#080c18;border:1px solid #1e2a40;padding:4px 6px;font-size:9px;color:var(--dim);min-height:30px;line-height:1.3;overflow:hidden;letter-spacing:.3px}
+#infobar b{color:var(--text)}
+#btnrow{display:flex;gap:4px}
+.btn{flex:1;background:linear-gradient(180deg,#152238,#0a1222);border:1px solid #26324a;color:var(--dim);padding:6px 2px;font-family:monospace;font-size:10px;font-weight:bold;cursor:pointer;text-align:center;border-radius:1px;position:relative;line-height:1.2;letter-spacing:.5px;transition:all .15s}
+.btn:active{transform:translateY(1px)}
+.btn .ic{display:block;font-size:13px;margin-bottom:1px}
+.btn.accent{background:linear-gradient(180deg,#3a2810,#1e1408);border-color:var(--fui-amber);color:var(--fui-amber);box-shadow:0 0 8px rgba(240,176,48,.2)}
+.btn.accent.on{background:linear-gradient(180deg,#6a4818,#3a2010);box-shadow:0 0 12px rgba(240,176,48,.5)}
+.btn.good{background:linear-gradient(180deg,#0e2a20,#061610);border-color:var(--fui-green);color:var(--fui-green);box-shadow:0 0 6px rgba(0,232,136,.15)}
+.btn:disabled{opacity:.4}
+#speedrow{display:flex;gap:4px;justify-content:center}
+.spd{background:#0a0f1e;border:1px solid #26324a;color:var(--dim);padding:3px 12px;font-size:11px;cursor:pointer;font-family:monospace;border-radius:1px;letter-spacing:.5px;transition:all .15s}
+.spd.on{background:var(--fui-amber);color:#060b14;border-color:var(--fui-amber);font-weight:bold;box-shadow:0 0 10px rgba(240,176,48,.4)}
+#overlay{position:fixed;inset:0;background:rgba(2,6,14,.85);display:none;align-items:center;justify-content:center;z-index:50;padding:8px;backdrop-filter:blur(2px)}
+#overlay.on{display:flex}
+.panel{background:var(--panel);border:1px solid #2a3650;width:100%;max-width:420px;max-height:92vh;overflow-y:auto;padding:10px;box-shadow:0 0 50px rgba(0,12,30,.8)}
+.panel::-webkit-scrollbar{width:6px}
+.panel::-webkit-scrollbar-thumb{background:var(--border)}
+.panel h2{font-size:13px;color:var(--fui-amber);text-align:center;margin-bottom:8px;border-bottom:1px solid #26324a;padding-bottom:6px;letter-spacing:2px;text-shadow:0 0 8px rgba(240,176,48,.2)}
+.close-x{float:right;cursor:pointer;color:var(--fui-red);font-size:14px;line-height:1;margin-top:-4px;opacity:.7}
+.close-x:active{color:#fff;opacity:1}
+.blist{display:grid;grid-template-columns:1fr 1fr;gap:5px}
+.bcard{background:#0a0f1e;border:1px solid #1e2a40;padding:5px;cursor:pointer;font-size:10px;display:flex;gap:5px;align-items:center;border-radius:1px;transition:all .12s}
+.bcard:active{background:#152036;border-color:var(--fui-cyan)}
+.bcard.locked{opacity:.45}
+.bcard.cant{border-color:var(--bad)}
+.bcard canvas{width:32px;height:32px;image-rendering:pixelated;flex:0 0 auto;background:#0a0e1a;border:1px solid #000}
+.bcard .info{flex:1;min-width:0}
+.bcard .nm{color:var(--text);font-weight:bold;font-size:10px}
+.bcard .cost{color:var(--c-credit);font-size:8px;margin-top:1px}
+.bcard .desc{color:var(--dim);font-size:8px;margin-top:1px;line-height:1.2}
+.rlist{display:flex;flex-direction:column;gap:5px}
+.rcard{background:#0a0f1e;border:1px solid #1e2a40;padding:6px;display:flex;gap:6px;align-items:center;cursor:pointer;border-radius:1px;transition:all .12s}
+.rcard.locked{opacity:.5}
+.rcard.done{border-color:var(--fui-green);opacity:.7;background:#0a1a14}
+.rcard.afford{border-color:var(--fui-amber);box-shadow:0 0 6px rgba(240,176,48,.15)}
+.rcard:active{background:#121a2e;border-color:var(--fui-cyan)}
+.rcard .info{flex:1;font-size:10px}
+.rcard .nm{color:var(--text);font-weight:bold;font-size:11px}
+.rcard .cost{color:var(--c-research);font-size:9px}
+.rcard .eff{color:var(--good);font-size:9px;margin-top:2px}
+.rcard .st{font-size:9px;font-weight:bold}
+.clist{display:flex;flex-direction:column;gap:5px}
+.ccard{background:#0a0f1e;border:1px solid #1e2a40;padding:6px;display:flex;gap:6px;align-items:center;font-size:10px;border-radius:1px}
+.ccard canvas{width:28px;height:28px;image-rendering:pixelated;flex:0 0 auto;background:#0a0e1a}
+.ccard .info{flex:1}
+.ccard .nm{color:var(--text);font-weight:bold;font-size:11px}
+.ccard .stat{color:var(--dim);font-size:9px;margin-top:2px}
+.ccard .stat b{color:var(--accent)}
+.ccard .job{font-size:9px;color:var(--good);margin-top:2px}
+.ccard .asg{font-size:9px;color:var(--dim)}
+.mlist{display:flex;flex-direction:column;gap:6px}
+.mitem{background:#0a0f1e;border:1px solid #1e2a40;padding:8px;font-size:10px;border-radius:1px}
+.mitem .t{color:var(--fui-amber);font-weight:bold;font-size:11px;margin-bottom:3px;letter-spacing:.5px}
+.mitem .d{color:var(--dim);line-height:1.4}
+.mitem .d b{color:var(--text)}
+.mbtn{display:block;width:100%;background:linear-gradient(180deg,#152238,#0a1222);border:1px solid #26324a;color:var(--dim);padding:8px;font-family:monospace;font-size:11px;font-weight:bold;cursor:pointer;margin-top:6px;border-radius:1px;letter-spacing:.5px;transition:all .15s}
+.mbtn:active{transform:translateY(1px)}
+.mbtn.danger{border-color:var(--fui-red);color:var(--fui-red);background:linear-gradient(180deg,#2a1018,#1a0810)}
+#eventpop{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.82);z-index:60;padding:16px}
+#eventpop.on{display:flex}
+.evbox{background:var(--panel);border:1px solid var(--fui-amber);padding:14px;max-width:340px;width:100%;text-align:center;border-radius:1px;box-shadow:0 0 40px rgba(240,176,48,.2),0 0 80px rgba(240,176,48,.08)}
+.evbox h3{color:var(--fui-amber);font-size:14px;margin-bottom:8px;letter-spacing:2px;text-shadow:0 0 10px rgba(240,176,48,.3)}
+.evbox canvas{display:block;margin:0 auto 8px;image-rendering:pixelated;background:#0a0e1a;border:1px solid var(--border)}
+.evbox p{color:var(--text);font-size:11px;margin-bottom:10px;line-height:1.5}
+.evbox .evbtn{background:var(--fui-amber);color:#060b14;border:none;padding:8px 24px;font-family:monospace;font-weight:bold;cursor:pointer;font-size:11px;border-radius:1px;box-shadow:0 0 12px rgba(240,176,48,.3)}
+.evbox .evbtn:active{transform:translateY(1px)}
+#toast{position:fixed;top:46%;left:50%;transform:translate(-50%,-50%);background:rgba(4,8,20,.94);color:var(--text);padding:7px 13px;font-size:10px;border:1px solid #26324a;z-index:70;opacity:0;transition:opacity .2s;pointer-events:none;max-width:84%;text-align:center;border-radius:1px;line-height:1.4;letter-spacing:.5px}
+#toast.on{opacity:1}
+#toast.bad{border-color:var(--bad);color:var(--bad)}
+#toast.good{border-color:var(--good);color:var(--good)}
+#title{position:fixed;inset:0;background:radial-gradient(ellipse at center,#0e1830 0%,#030814 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:80;padding:20px}
+#title canvas{width:180px;height:180px;image-rendering:pixelated;margin-bottom:16px}
+#title h1{color:var(--fui-amber);font-size:24px;margin-bottom:2px;letter-spacing:4px;text-shadow:0 0 20px rgba(240,176,48,.6),0 0 40px rgba(240,176,48,.2)}
+#title h2{color:var(--text);font-size:11px;margin-bottom:18px;letter-spacing:2px;opacity:.7}
+#title .start{background:var(--fui-amber);color:#060b14;border:none;padding:12px 36px;font-family:monospace;font-weight:bold;font-size:14px;cursor:pointer;letter-spacing:3px;border-radius:1px;box-shadow:0 0 24px rgba(240,176,48,.5),0 0 60px rgba(240,176,48,.15)}
+#title .start:active{transform:translateY(1px)}
+#title .tip{color:var(--dim);font-size:9px;margin-top:16px;text-align:center;line-height:1.6;padding:0 20px}
+#title .tip b{color:var(--accent)}
+#achbar{position:absolute;top:6px;right:8px;font-size:9px;color:var(--dim);letter-spacing:.5px}
+#achbar b{color:var(--good)}
+.sel-info{position:absolute;left:6px;right:6px;bottom:6px;background:rgba(6,10,24,.94);border:1px solid var(--fui-amber);padding:6px;font-size:9px;color:var(--text);border-radius:1px;display:none;z-index:5;box-shadow:0 0 12px rgba(240,176,48,.15)}
+.sel-info.on{display:block}
+.sel-info .sn{color:var(--accent);font-weight:bold;font-size:11px}
+.sel-info .sd{color:var(--dim);margin-top:2px;line-height:1.4}
+.sel-info .sd b{color:var(--text)}
+.sel-info .act{margin-top:4px;display:flex;gap:4px}
+.sel-info .act button{flex:1;background:#2a3060;border:1px solid var(--border);color:var(--text);padding:4px;font-size:9px;font-family:monospace;cursor:pointer;border-radius:2px}
+.sel-info .act button.del{border-color:var(--bad);color:var(--bad)}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="topbar">
+    <div id="resrow"></div>
+    <div id="datebar">
+      <span><span class="day" id="daytxt">第1日</span> · <span id="timetxt">06:00</span></span>
+      <div id="moralebar"><span>士气</span><div class="ml"><div class="mf" id="moralefill" style="width:70%"></div></div></div>
+    </div>
+  </div>
+  <div id="game-wrap">
+    <canvas id="game"></canvas>
+    <div class="sel-info" id="selinfo"></div>
+  </div>
+  <div id="bottombar">
+    <div id="infobar">欢迎来到月球！点击 <b>建造</b> 开始你的殖民地。目标：建造 <b>月球核心</b> 并拥有 20 名船员。注意：第15天起积分将开始过期！</div>
+    <div id="btnrow">
+      <button class="btn accent" id="btn-build"><span class="ic">⛏</span>建造</button>
+      <button class="btn" id="btn-research"><span class="ic">🔬</span>科研</button>
+      <button class="btn" id="btn-crew"><span class="ic">👤</span>船员</button>
+      <button class="btn" id="btn-menu"><span class="ic">≡</span>菜单</button>
+    </div>
+    <div id="speedrow">
+      <button class="spd" data-spd="0">‖ 暂停</button>
+      <button class="spd on" data-spd="1">▶ 1x</button>
+      <button class="spd" data-spd="3">▶▶ 3x</button>
+      <button class="spd" data-spd="5">▶▶▶ 5x</button>
+    </div>
+  </div>
+</div>
+<div id="overlay"><div class="panel" id="panel"></div></div>
+<div id="eventpop"><div class="evbox" id="evbox"></div></div>
+<div id="toast"></div>
+<div id="title">
+  <canvas id="title-canvas" width="72" height="72"></canvas>
+  <h1>月球基地</h1>
+  <h2>LUNAR COLONY</h2>
+  <button class="start" id="start-btn">开始建造</button>
+  <div class="tip">在荒芜的月球上建立繁荣殖民地<br>管理 <b>7种资源</b> · 招募 <b>船员</b> · 研发 <b>24项科技</b><br>建造 <b>17种建筑</b> · 应对 <b>23种事件</b> · 建造 <b>月球核心</b> 达成胜利</div>
+</div>
+<script>
+'use strict';
+// ============ 月球基地 LUNAR COLONY ============
+// 开罗风格像素模拟游戏
+
+// ---- 配置 ----
+const TILE = 40;
+const GRID_W = 14, GRID_H = 14;
+const VIEW_W = 8, VIEW_H = 10;
+
+// ---- 调色板 ----
+const C = {
+  // 地表
+  regolith1:'#3a3848', regolith2:'#42404c', regolith3:'#4e4a58', regolithDark:'#2a2838',
+  crater:'#252330', craterRim:'#5a5666',
+  // 建筑
+  metal:'#9aa0b8', metalDark:'#5a6078', metalLight:'#c0c6e0',
+  white:'#e8ecff', panel:'#7a8098',
+  glass:'#5ab8e8', glassDark:'#3a88c8', glassLight:'#9ae0ff',
+  yellow:'#ffd34e', yellowDark:'#c89828',
+  red:'#e85a5a', redDark:'#a83030',
+  green:'#7ae870', greenDark:'#4a9838',
+  purple:'#c9a0ff', purpleDark:'#8868c8',
+  orange:'#ff9844', orangeDark:'#c86828',
+  // 宇航员
+  suit:'#e8ecff', suitDark:'#a8b0c8', visor:'#3a4878', visorLight:'#5ab8e8',
+  // 天空
+  skyDay:'#1a2848', skyNight:'#050818',
+  earth:'#5ab8e8', earthLand:'#4a9838', earthCloud:'#e8ecff',
+  star:'#e8ecff', starDim:'#8890b8',
+  sun:'#ffd34e', sunCore:'#fff8d8',
+  // 特效
+  spark:'#ffd34e', bubble:'#7ad7ff', dust:'#8a8898',
+  good:'#5fe8a8', bad:'#ff6b6b',
+};
+
+// ---- 资源图标绘制 ----
+function drawResIcon(c, key){
+  c.imageSmoothingEnabled = false;
+  c.fillStyle = '#0d1020';
+  c.fillRect(0,0,10,10);
+  const px = (x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(x,y,w,h); };
+  switch(key){
+    case 'energy': // 闪电
+      px(2,0,2,2,'#c89828');
+      px(2,0,2,1,'#ffd34e');
+      px(4,2,2,2,'#ffd34e');
+      px(3,2,1,2,'#ffd34e');
+      px(2,4,2,3,'#ffd34e');
+      px(4,6,2,2,'#ffd34e');
+      px(6,4,2,3,'#fff8d8');
+      px(4,7,2,2,'#c89828');
+      px(5,7,1,1,'#fff8d8');
+      px(2,7,2,2,'#c89828');
+      break;
+    case 'oxygen': // 气泡 O2
+      px(1,2,3,6,'#7ad7ff');
+      px(2,1,2,8,'#7ad7ff');
+      px(3,2,1,1,'#9ae0ff');
+      px(3,7,1,1,'#9ae0ff');
+      px(5,4,3,3,'#7ad7ff');
+      px(6,3,2,5,'#7ad7ff');
+      px(6,3,1,1,'#9ae0ff');
+      px(7,4,1,1,'#9ae0ff');
+      px(1,8,3,1,'#3a88c8');
+      px(5,7,3,1,'#3a88c8');
+      break;
+    case 'mineral': // 晶体/碎块
+      px(2,3,6,4,'#8868c8');
+      px(1,4,8,3,'#c9a0ff');
+      px(3,2,4,2,'#c9a0ff');
+      px(4,1,2,2,'#c9a0ff');
+      px(2,7,6,2,'#8868c8');
+      px(1,6,1,1,'#8868c8');
+      px(8,6,1,1,'#8868c8');
+      // 高光
+      px(3,3,1,1,'#fff');
+      px(4,2,1,1,'#fff');
+      px(2,4,1,1,'#e8c8ff');
+      break;
+    case 'food': // 叶子/植物
+      px(4,0,2,2,'#4a9838');
+      px(3,2,4,2,'#7ae870');
+      px(2,3,6,2,'#7ae870');
+      px(3,5,4,2,'#7ae870');
+      px(4,7,2,2,'#4a9838');
+      // 叶脉
+      px(4,1,1,6,'#4a9838');
+      px(5,1,1,6,'#4a9838');
+      // 茎
+      px(4,8,2,2,'#3a7828');
+      // 高光
+      px(3,3,1,1,'#bfffb0');
+      break;
+    case 'credit': // 金币
+      // 外圈深金
+      px(1,2,8,6,'#886818');
+      px(2,1,6,1,'#886818');
+      px(2,8,6,1,'#886818');
+      px(1,3,1,4,'#886818');
+      px(8,3,1,4,'#886818');
+      // 主体金黄
+      px(2,2,6,6,'#ffd34e');
+      px(3,1,4,6,'#ffd34e');
+      px(3,2,4,5,'#ffe08a');
+      // 高光
+      px(2,2,2,1,'#fff8d8');
+      px(2,3,1,2,'#fff8d8');
+      // 中心 ★ 标记
+      px(4,3,2,1,'#c89828');
+      px(3,4,4,1,'#c89828');
+      px(4,5,2,1,'#c89828');
+      px(4,4,1,1,'#886818');
+      px(5,4,1,1,'#886818');
+      px(2,7,6,1,'#c89828');
+      break;
+    case 'research': // 烧瓶
+      px(4,1,2,2,'#9ae0ff');
+      px(3,3,4,1,'#5ab8e8');
+      px(3,4,4,1,'#9ae0ff');
+      px(2,5,6,3,'#5ab8e8');
+      px(2,5,6,1,'#9ae0ff');
+      px(1,8,8,2,'#3a88c8');
+      px(2,8,6,1,'#5ab8e8');
+      // 液体
+      px(3,6,4,2,'#7ad7ff');
+      px(3,6,4,1,'#9ae0ff');
+      // 气泡
+      px(4,5,1,1,'#fff');
+      px(6,6,1,1,'#fff');
+      break;
+    case 'expiry':
+      px(1,1,8,8,'#603030'); px(2,0,6,1,'#603030'); px(2,9,6,1,'#603030');
+      px(0,2,1,6,'#603030'); px(9,2,1,6,'#603030');
+      px(2,1,6,8,'#ff6b6b'); px(2,2,4,6,'#ff4040');
+      px(4,2,1,3,'#fff8d8'); px(4,5,2,1,'#fff8d8');
+      px(3,1,1,1,'#ffc0c0'); break;
+  }
+}
+
+// ---- 建筑定义 ----
+const BDEF = {
+  habitat:    {name:'居住舱',  desc:'容纳+2船员', cost:{mineral:20,credit:40},  cap:{colonist:2}, col:'#e8ecff', unlock:true},
+  solar:       {name:'太阳能板',desc:'白天产能量', cost:{mineral:10,credit:25},  prod:{energy:0.8}, dayOnly:true, col:'#ffd34e', unlock:true},
+  rtg:         {name:'同位素发电机',desc:'全天产能量',cost:{mineral:30,credit:60}, prod:{energy:0.5}, col:'#ff9844', tech:'rtg'},
+  oxygen:      {name:'制氧机',  desc:'产氧气',   cost:{mineral:15,credit:35}, prod:{oxygen:0.7}, use:{energy:0.15}, col:'#7ad7ff', unlock:true},
+  mine:        {name:'采矿场',  desc:'产矿物 需船员', cost:{mineral:0,credit:50},  prod:{mineral:0.5}, use:{energy:0.1}, needCrew:true, job:'mining', col:'#c9a0ff', unlock:true},
+  greenhouse:  {name:'温室',   desc:'产食物 需船员', cost:{mineral:20,credit:55}, prod:{food:0.5}, use:{energy:0.12,oxygen:0.05}, needCrew:true, job:'farming', col:'#7ae870', unlock:true},
+  lab:         {name:'实验室',  desc:'产科研 需船员', cost:{mineral:35,credit:80}, prod:{research:0.4}, use:{energy:0.15}, needCrew:true, job:'science', col:'#7ad7ff', unlock:true},
+  storage:     {name:'仓库',    desc:'提升存储上限', cost:{mineral:25,credit:45}, capAdd:{energy:150,oxygen:150,mineral:150,food:150}, col:'#9aa0b8', unlock:true},
+  comm:        {name:'通讯塔',  desc:'解锁事件与贸易', cost:{mineral:30,credit:70}, flag:'comm', col:'#5ab8e8', tech:'comm'},
+  rec:         {name:'娱乐室',  desc:'提升士气', cost:{mineral:20,credit:50}, morale:0.5, use:{energy:0.08}, col:'#ff9844', tech:'rec'},
+  core:        {name:'月球核心', desc:'胜利建筑！', cost:{mineral:200,credit:200,research:500}, flag:'core', col:'#ffd34e', tech:'core'},
+  tradepost:   {name:'贸易站',  desc:'用金币换取资源', cost:{mineral:25,credit:60}, flag:'trade', col:'#ffe08a', tech:'comm'},
+  medbay:      {name:'医务室',  desc:'治疗船员 降低死亡风险', cost:{mineral:40,credit:70}, use:{energy:0.1}, healRate:0.3, col:'#ff6b6b', tech:'medtech'},
+  observatory: {name:'天文台',  desc:'被动产科研 预警事件', cost:{mineral:45,credit:90}, prod:{research:0.2}, use:{energy:0.08}, eventBoost:3, col:'#9ae0ff', tech:'obstech'},
+  waterpur:    {name:'水循环站',desc:'减少50%氧气消耗', cost:{mineral:30,credit:65}, use:{energy:0.06}, oxygenSave:0.5, col:'#7ad7ff', tech:'watertech'},
+  droidbay:    {name:'机器人车间',desc:'自动产矿物 无需船员', cost:{mineral:50,credit:100}, prod:{mineral:0.35}, use:{energy:0.18}, col:'#c9a0ff', tech:'droidtech'},
+  radar:       {name:'雷达站',  desc:'探测陨石 减少事件损失', cost:{mineral:35,credit:85}, use:{energy:0.12}, shield:0.5, col:'#5fe8a8', tech:'shieldtech'},
+};
+
+// ---- 科技定义 ----
+const RDEF = {
+  rtg:    {name:'同位素发电', cost:60, desc:'解锁同位素发电机（全天供电）', unlock:'rtg'},
+  comm:   {name:'深空通讯', cost:80, desc:'解锁通讯塔（触发事件与贸易）', unlock:'comm'},
+  rec:    {name:'休闲设施', cost:100, desc:'解锁娱乐室（维持船员士气）', unlock:'rec'},
+  solar2: {name:'高效光伏', cost:120, desc:'太阳能板效率+50%', boost:{solar:1.5}},
+  oxygen2:{name:'循环制氧', cost:140, desc:'制氧机效率+50%', boost:{oxygen:1.5}},
+  mine2:  {name:'深层钻探', cost:160, desc:'采矿场效率+50%', boost:{mine:1.5}},
+  farm2:  {name:'水培栽培', cost:180, desc:'温室效率+50%', boost:{greenhouse:1.5}},
+  lab2:   {name:'量子计算', cost:220, desc:'实验室效率+80%', boost:{lab:1.8}},
+  storage2:{name:'压缩仓储', cost:120, desc:'所有存储上限+200', boost:{cap:200}},
+  habitat2:{name:'扩展居所', cost:150, desc:'居住舱容量+2', boost:{habitatCap:2}},
+  core:   {name:'月球核心计划', cost:300, desc:'解锁终极建筑：月球核心', unlock:'core'},
+  trade2: {name:'星际贸易', cost:100, desc:'贸易站效率+50%，每次贸易额外获得10金币', boost:{trade:1.5}},
+  energy2:{name:'能量存储', cost:90, desc:'所有建筑能耗-20%', boost:{energyUse:0.8}},
+  recruit:{name:'招募策略', cost:110, desc:'招募船员费用-30%', boost:{recruit:0.7}},
+  medtech: {name:'医疗技术', cost:100, desc:'解锁医务室（治疗船员，降低死亡风险）', unlock:'medtech'},
+  obstech: {name:'天文观测', cost:130, desc:'解锁天文台（被动科研+预警事件）', unlock:'obstech'},
+  watertech:{name:'水循环技术', cost:120, desc:'解锁水循环站（减少50%氧气消耗）', unlock:'watertech'},
+  droidtech:{name:'机器人技术', cost:150, desc:'解锁机器人车间（自动采矿，无需船员）', unlock:'droidtech'},
+  shieldtech:{name:'陨石防御', cost:140, desc:'解锁雷达站（探测陨石，减少事件损害）', unlock:'shieldtech'},
+  terraform:{name:'初阶地表改造', cost:350, desc:'所有资源产能+20%，解锁月球核心前的终阶科技', boost:{allProd:1.2}},
+  expiryProtect:{name:'积分保护', cost:120, desc:'阻止每天30%积分的自动过期', unlock:'expiryProtect'},
+  medbay2: {name:'高级医疗', cost:180, desc:'医务室治疗效率翻倍', boost:{heal:2}},
+  robot2:  {name:'智能采矿', cost:200, desc:'机器人车间产量翻倍', boost:{droid:2}},
+  radar2:  {name:'深空预警', cost:170, desc:'雷达站保护提升至90%', boost:{shield:0.9}},
+};
+
+// ---- 资源定义 ----
+const RES = [
+  {key:'energy',  name:'能量',  icon:'#ffd34e', cap:300, start:120},
+  {key:'oxygen',   name:'氧气',  icon:'#7ad7ff', cap:300, start:120},
+  {key:'mineral',  name:'矿物',  icon:'#c9a0ff', cap:300, start:60},
+  {key:'food',     name:'食物',  icon:'#9fe870', cap:300, start:60},
+  {key:'credit',   name:'金币',  icon:'#ffe08a', cap:9999, start:500},
+  {key:'research', name:'科研',  icon:'#7ad7ff', cap:9999, start:0},{key:'expiry', name:'过期积分', icon:'#ff6b6b', cap:9999, start:0},
+];
+
+// ---- 游戏状态 ----
+let G;
+
+function newGame(){
+  G = {
+    res:{}, cap:{},
+    grid: Array(GRID_W*GRID_H).fill(null),
+    crew: [],
+    day:1, time:0.25, // 0=日出 0.5=日落
+    speed:1, paused:false,
+    scrollX: GRID_W/2 - VIEW_W/2, scrollY: GRID_H/2 - VIEW_H/2,
+    placeMode:null, // building key
+    selected:null, // selected tile index
+    hover:null,
+    unlocked:{rtg:false,comm:false,rec:false,core:false,medtech:false,obstech:false,watertech:false,droidtech:false,shieldtech:false},
+    researchDone:{},
+    morale:70,
+    nextCrewId:1,
+    nextEventDay: 4 + Math.floor(Math.random()*3),
+    events:0,
+    rover:{x:3, y:3, tx:3, ty:3, t:0, path:[]},
+    particles:[],
+    floats:[], // floating text
+    constructAnim:[], // {idx, t}
+    achievements:new Set(),
+    soundOn:true,
+    tradeOffers:[],
+    gameOver:false, won:false,
+    shake:0,
+    preview:false,
+    colonistCap:0, // 居住容量
+    deathTimer:0, // 资源耗尽计时器
+    expiryPoints:0, // 即将过期的积分
+    expiryDay:15, // 积分在第15天过期提示
+    expiryWarned:false, // 是否已经预警
+    expired:0, // 已过期积分累计
+    healTimer:0, // 医疗计时器
+    stats:{totalBuilt:0, totalResearched:0, totalEvents:0, totalRecruited:0, startTime:Date.now()},
+  };
+  for(const r of RES){ G.res[r.key]=r.start; G.cap[r.key]=r.cap; }
+  // 重新生成地形
+  terrain = generateTerrain();
+  // 初始船员
+  addCrew('指挥官 阿尔法', {mining:2, farming:2, science:3, eng:4});
+  addCrew('工程师 贝塔', {mining:3, farming:2, science:2, eng:4});
+  // 初始建筑：一个居住舱 + 太阳能板
+  const cx = Math.floor(GRID_W/2), cy = Math.floor(GRID_H/2);
+  placeBuilding('habitat', cx, cy, true);
+  placeBuilding('solar', cx+1, cy, true);
+  placeBuilding('solar', cx-1, cy, true);
+  placeBuilding('oxygen', cx, cy+1, true);
+  G.scrollX = cx - VIEW_W/2 + 0.5;
+  G.scrollY = cy - VIEW_H/2 + 0.5;
+}
+
+function addCrew(name, stats){
+  G.crew.push({
+    id: G.nextCrewId++, name:name,
+    mining:stats.mining||1, farming:stats.farming||1, science:stats.science||1, eng:stats.eng||1,
+    job:null, // assigned building idx
+    x: GRID_W/2 + (Math.random()-0.5)*2, y: GRID_H/2 + (Math.random()-0.5)*2,
+    tx: GRID_W/2, ty: GRID_H/2,
+    moveT:0, frame:0, mood:'happy',
+  });
+}
+
+function placeBuilding(type, gx, gy, free){
+  const def = BDEF[type];
+  if(!free){
+    for(const k in def.cost){
+      if(G.res[k] < def.cost[k]) return false;
+    }
+  }
+  const idx = gy*GRID_W + gx;
+  if(G.grid[idx]) return false;
+  if(gx<0||gx>=GRID_W||gy<0||gy>=GRID_H) return false;
+  if(!free){
+    for(const k in def.cost) G.res[k] -= def.cost[k];
+  }
+  G.grid[idx] = {type, gx, gy, crew:[], t:Math.random()*100, justBuilt:free?0:1};
+  if(!free){
+    G.constructAnim.push({idx, t:0});
+    spawnParticles(gx*TILE+TILE/2, gy*TILE+TILE/2, 'build');
+    Sound.build();
+  }
+  // 应用容量
+  if(def.cap){
+    if(def.cap.colonist) G.colonistCap = (G.colonistCap||0) + def.cap.colonist;
+  }
+  if(def.capAdd){
+    for(const k in def.capAdd) G.cap[k] += def.capAdd[k];
+  }
+  if(type==='storage' && G.researchDone.storage2){
+    // already applied via capAdd
+  }
+  if(!free) G.stats.totalBuilt++;
+  checkAchievements();
+  return true;
+}
+
+// ---- Canvas ----
+const canvas = document.getElementById('game');
+let ctx = canvas.getContext('2d');
+let canvasW=0, canvasH=0, scale=1;
+
+function resizeCanvas(){
+  const wrap = document.getElementById('game-wrap');
+  const r = wrap.getBoundingClientRect();
+  const dpr = Math.min(2, window.devicePixelRatio||1);
+  // 固定内部分辨率（游戏坐标）
+  canvasW = VIEW_W * TILE; // 320
+  canvasH = VIEW_H * TILE; // 400
+  canvas.width = canvasW * dpr;
+  canvas.height = canvasH * dpr;
+  // CSS 拉伸填满容器
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.imageSmoothingEnabled = false;
+  scale = 1;
+}
+window.addEventListener('resize', resizeCanvas);
+
+// ---- 像素绘制辅助 ----
+function px(x,y,w,h,c){ ctx.fillStyle=c; ctx.fillRect(x|0,y|0,w|0,h|0); }
+
+// ---- 建筑绘制 ----
+function drawBuilding(type, x, y, t, anim){
+  const s = 1; // 像素单位
+  ctx.save();
+  if(anim){ // 建造动画：从下方升起
+    const h = anim; // 0..1
+    ctx.translate(0, (1-h)*20);
+    ctx.globalAlpha = Math.min(1, h*1.5);
+  }
+  switch(type){
+    case 'habitat': drawHabitat(x,y,t); break;
+    case 'solar': drawSolar(x,y,t); break;
+    case 'rtg': drawRTG(x,y,t); break;
+    case 'oxygen': drawOxygen(x,y,t); break;
+    case 'mine': drawMine(x,y,t); break;
+    case 'greenhouse': drawGreenhouse(x,y,t); break;
+    case 'lab': drawLab(x,y,t); break;
+    case 'storage': drawStorage(x,y,t); break;
+    case 'comm': drawComm(x,y,t); break;
+    case 'rec': drawRec(x,y,t); break;
+    case 'core': drawCore(x,y,t); break;
+    case 'tradepost': drawTradepost(x,y,t); break;
+    case 'medbay': drawMedbay(x,y,t); break;
+    case 'observatory': drawObservatory(x,y,t); break;
+    case 'waterpur': drawWaterpur(x,y,t); break;
+    case 'droidbay': drawDroidbay(x,y,t); break;
+    case 'radar': drawRadar(x,y,t); break;
+  }
+  ctx.restore();
+}
+
+function drawHabitat(x,y,t){
+  // 基座
+  px(x+3, y+30, 34, 8, C.metalDark);
+  px(x+3, y+30, 34, 2, C.metal);
+  px(x+3, y+36, 34, 2, '#1a1a28');
+  // 圆顶
+  px(x+8, y+14, 24, 18, C.white);
+  px(x+10, y+11, 20, 4, C.white);
+  px(x+12, y+9, 16, 3, C.white);
+  px(x+14, y+8, 12, 2, C.white);
+  // 圆顶高光
+  px(x+10, y+13, 4, 10, '#fff');
+  px(x+12, y+11, 2, 4, '#fff');
+  // 圆顶阴影
+  px(x+28, y+14, 4, 14, C.suitDark);
+  px(x+30, y+16, 2, 8, C.suitDark);
+  // 窗户
+  const lit = (t%60)<30;
+  px(x+14, y+20, 12, 8, lit?C.glassDark:C.glass);
+  px(x+14, y+20, 12, 2, lit?C.glassLight:C.glass);
+  px(x+14, y+20, 2, 8, C.glassLight);
+  // 门
+  px(x+18, y+28, 4, 8, C.metalDark);
+  px(x+18, y+28, 4, 2, C.yellow);
+  // 天线
+  px(x+19, y+2, 2, 8, C.metal);
+  px(x+16, y+2, 8, 2, C.red);
+  px(x+19, y, 2, 2, C.yellow);
+}
+
+function drawSolar(x,y,t){
+  // 支架
+  px(x+8, y+30, 4, 8, C.metalDark);
+  px(x+28, y+30, 4, 8, C.metalDark);
+  px(x+8, y+36, 24, 2, C.metalDark);
+  // 面板（倾斜）
+  px(x+4, y+12, 32, 18, C.metalDark);
+  px(x+6, y+14, 28, 14, C.glassDark);
+  // 网格线
+  for(let i=0;i<4;i++){
+    px(x+6+i*7, y+14, 1, 14, C.metalDark);
+  }
+  px(x+6, y+21, 28, 1, C.metalDark);
+  // 高光（白天）
+  const day = isDay();
+  if(day){
+    px(x+8, y+16, 6, 4, C.glassLight);
+    px(x+8, y+16, 2, 2, '#fff');
+  }
+}
+
+function drawRTG(x,y,t){
+  // 基座
+  px(x+6, y+32, 28, 6, C.metalDark);
+  px(x+6, y+32, 28, 2, C.metal);
+  // 主体（圆柱）
+  px(x+10, y+14, 20, 20, C.orangeDark);
+  px(x+10, y+14, 20, 2, C.orange);
+  px(x+10, y+14, 2, 20, C.orange);
+  px(x+28, y+14, 2, 20, '#883818');
+  // 散热片
+  for(let i=0;i<3;i++){
+    px(x+4, y+16+i*6, 6, 2, C.metalDark);
+    px(x+30, y+16+i*6, 6, 2, C.metalDark);
+  }
+  // 警示灯
+  const blink = (t%30)<15;
+  px(x+18, y+10, 4, 4, blink?C.red:'#883838');
+  px(x+18, y+8, 4, 2, C.metal);
+}
+
+function drawOxygen(x,y,t){
+  // 基座
+  px(x+4, y+32, 32, 6, C.metalDark);
+  px(x+4, y+32, 32, 2, C.metal);
+  // 主罐
+  px(x+8, y+16, 24, 18, C.glassDark);
+  px(x+8, y+16, 24, 2, C.glass);
+  px(x+8, y+16, 2, 18, C.glass);
+  px(x+30, y+16, 2, 18, '#2868a0');
+  // 标签
+  px(x+14, y+22, 12, 6, C.glassLight);
+  px(x+16, y+24, 8, 2, C.glassDark);
+  // 顶部出气
+  px(x+16, y+10, 8, 6, C.metal);
+  px(x+18, y+8, 4, 2, C.metalDark);
+  // 气泡特效
+  if(!G.preview && Math.random()<0.3){
+    G.particles.push({x:x+20+Math.random()*4, y:y+8, vx:0, vy:-0.5, life:30, c:C.bubble, size:1});
+  }
+}
+
+function drawMine(x,y,t){
+  // 矿坑（暗洞）
+  px(x+4, y+24, 32, 14, C.crater);
+  px(x+6, y+26, 28, 10, '#1a1820');
+  px(x+8, y+28, 24, 6, '#0a0810');
+  // 矿车轨道
+  px(x+4, y+30, 32, 1, C.metalDark);
+  px(x+4, y+33, 32, 1, C.metalDark);
+  // 矿车（移动）
+  const mx = x+6 + ((t*0.5)%24);
+  px(mx, y+27, 8, 4, C.metalDark);
+  px(mx+1, y+27, 6, 2, C.metal);
+  px(mx+2, y+31, 2, 2, '#1a1a28');
+  px(mx+5, y+31, 2, 2, '#1a1a28');
+  // 矿石堆
+  px(x+28, y+22, 6, 4, C.purpleDark);
+  px(x+29, y+21, 4, 2, C.purple);
+  // 支架
+  px(x+4, y+14, 4, 12, C.metalDark);
+  px(x+32, y+14, 4, 12, C.metalDark);
+  px(x+4, y+14, 32, 2, C.metal);
+  // 灯
+  const blink=(t%40)<20;
+  px(x+18, y+14, 4, 2, blink?C.yellow:C.orangeDark);
+}
+
+function drawGreenhouse(x,y,t){
+  // 基座
+  px(x+3, y+32, 34, 6, C.metalDark);
+  px(x+3, y+32, 34, 2, C.metal);
+  // 透明穹顶
+  px(x+5, y+14, 30, 20, C.glassDark);
+  px(x+7, y+11, 26, 4, C.glassDark);
+  px(x+9, y+9, 22, 3, C.glassDark);
+  px(x+11, y+8, 18, 2, C.glassDark);
+  // 高光
+  px(x+7, y+13, 4, 8, C.glassLight);
+  px(x+9, y+11, 2, 4, '#fff');
+  // 植物
+  const grow = Math.sin(t*0.05)*0.5+0.5;
+  px(x+10, y+24, 4, 6, C.greenDark);
+  px(x+11, y+22, 2, 4, C.green);
+  px(x+18, y+24, 4, 6, C.greenDark);
+  px(x+19, y+22, 2, 4, C.green);
+  px(x+26, y+24, 4, 6, C.greenDark);
+  px(x+27, y+22, 2, 4, C.green);
+  // 土壤
+  px(x+8, y+30, 24, 2, '#4a3818');
+}
+
+function drawLab(x,y,t){
+  // 基座
+  px(x+3, y+30, 34, 8, C.metalDark);
+  px(x+3, y+30, 34, 2, C.metal);
+  // 主体
+  px(x+5, y+12, 30, 20, C.metal);
+  px(x+5, y+12, 30, 2, C.metalLight);
+  px(x+5, y+12, 2, 20, C.metalLight);
+  px(x+33, y+12, 2, 20, C.metalDark);
+  // 窗户
+  px(x+8, y+16, 10, 8, C.glassDark);
+  px(x+8, y+16, 10, 2, C.glassLight);
+  px(x+22, y+16, 10, 8, C.glassDark);
+  px(x+22, y+16, 10, 2, C.glassLight);
+  // 仪器闪烁
+  const blink=(t%20)<10;
+  px(x+10, y+20, 2, 2, blink?C.green:C.greenDark);
+  px(x+24, y+20, 2, 2, blink?C.red:C.redDark);
+  // 天线/碟形
+  px(x+18, y+4, 4, 8, C.metalDark);
+  px(x+14, y+2, 12, 4, C.metal);
+  px(x+16, y, 8, 2, C.metalLight);
+  px(x+19, y-2, 2, 2, C.red);
+}
+
+function drawStorage(x,y,t){
+  // 基座
+  px(x+3, y+32, 34, 6, C.metalDark);
+  // 集装箱
+  px(x+4, y+8, 14, 26, C.metalDark);
+  px(x+4, y+8, 14, 2, C.metal);
+  px(x+4, y+8, 2, 26, C.metal);
+  px(x+22, y+12, 14, 22, C.metalDark);
+  px(x+22, y+12, 14, 2, C.metal);
+  px(x+22, y+12, 2, 22, C.metal);
+  // 标签
+  px(x+7, y+14, 8, 4, C.yellow);
+  px(x+25, y+18, 8, 4, C.orange);
+  // 通风口
+  px(x+6, y+26, 10, 1, '#1a1a28');
+  px(x+6, y+28, 10, 1, '#1a1a28');
+}
+
+function drawComm(x,y,t){
+  // 基座
+  px(x+14, y+32, 12, 6, C.metalDark);
+  px(x+14, y+32, 12, 2, C.metal);
+  // 塔身
+  px(x+18, y+10, 4, 22, C.metal);
+  px(x+18, y+10, 1, 22, C.metalLight);
+  // 碟形天线
+  px(x+8, y+4, 24, 6, C.metalLight);
+  px(x+8, y+4, 24, 2, '#fff');
+  px(x+10, y+2, 20, 3, C.metal);
+  px(x+12, y, 16, 3, C.metal);
+  // 信号闪烁
+  const blink=(t%15)<7;
+  if(blink){
+    px(x+6, y+6, 2, 2, C.yellow);
+    px(x+32, y+6, 2, 2, C.yellow);
+  }
+  // 接收器
+  px(x+18, y+8, 4, 2, C.red);
+}
+
+function drawRec(x,y,t){
+  // 基座
+  px(x+3, y+30, 34, 8, C.metalDark);
+  px(x+3, y+30, 34, 2, C.metal);
+  // 主体
+  px(x+5, y+14, 30, 18, C.orangeDark);
+  px(x+5, y+14, 30, 2, C.orange);
+  px(x+5, y+14, 2, 18, C.orange);
+  // 屏幕
+  px(x+8, y+18, 12, 8, '#1a1a28');
+  px(x+8, y+18, 12, 1, C.green);
+  // 屏幕内容（像素游戏）
+  const f = (t*0.1|0)%4;
+  px(x+10+f, y+22, 2, 2, C.green);
+  px(x+16-f, y+20, 2, 2, C.red);
+  // 椅子
+  px(x+24, y+24, 6, 4, C.metalDark);
+  px(x+24, y+22, 2, 2, C.metal);
+  // 灯
+  const blink=(t%25)<12;
+  px(x+30, y+16, 2, 2, blink?C.yellow:'#885828');
+}
+
+function drawCore(x,y,t){
+  // 中心核心 - 发光
+  const pulse = Math.sin(t*0.1)*0.3+0.7;
+  // 基座
+  px(x+2, y+32, 36, 6, C.metalDark);
+  px(x+2, y+32, 36, 2, C.metal);
+  // 主体塔
+  px(x+8, y+8, 24, 26, C.metalDark);
+  px(x+8, y+8, 24, 2, C.metal);
+  px(x+8, y+8, 2, 26, C.metal);
+  // 核心能量球
+  px(x+12, y+14, 16, 16, C.yellow);
+  px(x+14, y+16, 12, 12, C.sunCore);
+  px(x+16, y+18, 8, 8, '#fff');
+  // 能量环
+  const ring = (t*0.05|0)%4;
+  ctx.globalAlpha = pulse;
+  px(x+10-ring, y+12-ring, 20+ring*2, 2, C.yellow);
+  px(x+10-ring, y+30+ring, 20+ring*2, 2, C.yellow);
+  ctx.globalAlpha = 1;
+  // 放射光
+  if(!G.preview && Math.random()<0.4){
+    const a = Math.random()*Math.PI*2;
+    G.particles.push({x:x+20+Math.cos(a)*8, y:y+22+Math.sin(a)*8, vx:Math.cos(a)*0.8, vy:Math.sin(a)*0.8, life:20, c:C.spark, size:1});
+  }
+}
+
+function drawTradepost(x,y,t){
+  // 基座
+  px(x+4, y+32, 32, 6, C.metalDark);
+  px(x+4, y+32, 32, 2, C.metal);
+  // 主体
+  px(x+6, y+16, 28, 18, C.yellowDark);
+  px(x+6, y+16, 28, 2, C.yellow);
+  px(x+6, y+16, 2, 18, C.yellow);
+  px(x+32, y+16, 2, 18, '#886818');
+  // 屏幕
+  px(x+10, y+20, 20, 8, '#1a1a28');
+  px(x+10, y+20, 20, 1, C.green);
+  // 屏幕闪烁数据
+  const blink = (t*0.1|0)%4;
+  px(x+12+blink*3, y+23, 2, 2, C.green);
+  px(x+22-blink*2, y+25, 2, 1, C.yellow);
+  // 信标灯
+  const light = (t%40)<20;
+  px(x+18, y+8, 4, 4, light?C.yellow:'#886828');
+  px(x+18, y+6, 4, 2, C.metal);
+  // 装饰: 货箱
+  px(x+4, y+26, 4, 6, C.metalDark);
+  px(x+32, y+26, 4, 6, C.orangeDark);
+}
+
+function drawMedbay(x,y,t){
+  // 基座
+  px(x+4, y+32, 32, 6, C.metalDark);
+  px(x+4, y+32, 32, 2, C.metal);
+  // 主体
+  px(x+6, y+14, 28, 20, C.metal);
+  px(x+6, y+14, 28, 2, C.metalLight);
+  // 红色十字标记
+  px(x+14, y+18, 12, 2, C.red);
+  px(x+19, y+13, 2, 12, C.red);
+  // 窗户
+  px(x+24, y+20, 6, 6, C.glassDark);
+  px(x+24, y+20, 6, 1, C.glassLight);
+  // 医疗屏（闪烁心率）
+  const beat = (t*2|0)%4===0;
+  px(x+10, y+24, 6, 4, '#1a1a28');
+  px(x+11, y+25, 1, 2, beat?C.red:C.greenDark);
+  px(x+13, y+25, 1, 2, beat?C.red:C.greenDark);
+  // 顶部标志
+  px(x+10, y+10, 4, 4, C.red);
+  px(x+12, y+8, 2, 2, C.red);
+  // 天线
+  px(x+26, y+6, 2, 8, C.metalDark);
+  px(x+25, y+4, 4, 2, C.red);
+}
+
+function drawObservatory(x,y,t){
+  // 基座
+  px(x+10, y+32, 20, 6, C.metalDark);
+  px(x+10, y+32, 20, 2, C.metal);
+  // 塔身
+  px(x+16, y+18, 8, 14, C.metalDark);
+  px(x+16, y+18, 8, 2, C.metal);
+  // 穹顶
+  px(x+6, y+8, 28, 16, C.metalDark);
+  px(x+6, y+8, 28, 2, C.metal);
+  px(x+8, y+6, 24, 4, C.metal);
+  px(x+10, y+4, 20, 4, C.glassDark);
+  px(x+10, y+4, 20, 1, C.glassLight);
+  // 望远镜镜片
+  px(x+14, y+6, 12, 8, C.glassDark);
+  px(x+14, y+6, 12, 2, C.glassLight);
+  px(x+16, y+8, 8, 4, C.glassLight);
+  // 星光反射
+  const twinkle = (t%20)<10;
+  if(twinkle) px(x+18, y+6, 2, 2, '#fff');
+  // 数据屏
+  px(x+8, y+18, 6, 4, '#1a1a28');
+  px(x+8, y+18, 6, 1, C.green);
+}
+
+function drawWaterpur(x,y,t){
+  // 基座
+  px(x+4, y+32, 32, 6, C.metalDark);
+  px(x+4, y+32, 32, 2, C.metal);
+  // 主罐
+  px(x+8, y+14, 10, 20, C.glassDark);
+  px(x+8, y+14, 10, 2, C.glass);
+  // 副罐
+  px(x+22, y+18, 10, 16, C.glassDark);
+  px(x+22, y+18, 10, 2, C.glass);
+  // 连接管
+  px(x+17, y+26, 6, 2, C.metalDark);
+  // 水位线（动态）
+  const level = 4 + Math.sin(t*0.03)*2;
+  px(x+8, y+28-level, 10, 4, C.glassLight);
+  px(x+22, y+28-level, 10, 4, C.glassLight);
+  // 水泵
+  px(x+14, y+28, 12, 4, C.metal);
+  px(x+16, y+30, 8, 2, C.metalLight);
+  // 水滴特效
+  if(!G.preview && Math.random()<0.25){
+    G.particles.push({x:x+12+Math.random()*8, y:y+16+Math.random()*4, vx:0, vy:-0.3, life:25, c:C.bubble, size:1});
+  }
+}
+
+function drawDroidbay(x,y,t){
+  // 基座
+  px(x+4, y+32, 32, 6, C.metalDark);
+  px(x+4, y+32, 32, 2, C.metal);
+  // 车间主体
+  px(x+6, y+14, 28, 20, C.metalDark);
+  px(x+6, y+14, 28, 2, C.metal);
+  // 装配臂
+  const arm = (t*0.1|0)%4;
+  px(x+10+arm*2, y+18, 2, 10, C.metal);
+  px(x+8+arm*2, y+16, 6, 2, C.metalLight);
+  px(x+22-arm*2, y+18, 2, 10, C.metal);
+  px(x+20-arm*2, y+16, 6, 2, C.metalLight);
+  // 传送带
+  px(x+6, y+30, 28, 2, C.metalDark);
+  px(x+6, y+30, 28, 1, C.metal);
+  // 产出矿物
+  const mining = ((t*0.3)%20);
+  if(mining>5){
+    px(x+12+mining, y+27, 3, 3, C.purple);
+    px(x+13+mining, y+28, 1, 1, '#fff');
+  }
+  // 警示灯
+  const blink = (t%30)<15;
+  px(x+6, y+10, 4, 4, blink?C.green:'#1a3a1a');
+  px(x+30, y+10, 4, 4, blink?C.green:'#1a3a1a');
+}
+
+function drawRadar(x,y,t){
+  // 基座
+  px(x+14, y+32, 12, 6, C.metalDark);
+  px(x+14, y+32, 12, 2, C.metal);
+  // 塔身
+  px(x+18, y+16, 4, 16, C.metal);
+  px(x+18, y+16, 1, 16, C.metalLight);
+  // 雷达碟
+  const scan = (t*0.08)%Math.PI*2;
+  pc(x+20, y+10, 14, 6, 0, Math.PI*2, C.metalLight);
+  pc(x+20, y+10, 12, 4, 0, Math.PI*2, C.metal);
+  pc(x+20, y+10, 8, 3, 0, Math.PI*2, C.glassDark);
+  // 扫描线（旋转）
+  ctx.strokeStyle = C.green;
+  ctx.lineWidth = 1;
+  ctx.globalAlpha = 0.6;
+  ctx.beginPath();
+  const sw = 6;
+  ctx.moveTo(x+20, y+10);
+  ctx.lineTo(x+20+Math.cos(scan)*sw, y+10+Math.sin(scan)*sw);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  // 信号闪烁
+  const blip = (t%15)<5;
+  if(blip){
+    px(x+8, y+8, 2, 2, C.green);
+    px(x+30, y+6, 2, 2, C.green);
+  }
+  // 控制台
+  px(x+4, y+26, 8, 6, '#1a1a28');
+  px(x+4, y+26, 8, 1, C.green);
+  px(x+6+blip*1, y+28, 2, 1, C.green);
+}
+
+// 辅助：像素圆
+function pc(x,y,w,h,a0,a1,c){
+  ctx.fillStyle = c;
+  ctx.beginPath();
+  ctx.ellipse(x, y, w/2, h/2, 0, a0, a1);
+  ctx.fill();
+}
+
+// ---- 宇航员绘制 ----
+function drawAstronaut(x, y, frame, mood){
+  // 影子
+  ctx.globalAlpha = 0.3;
+  px(x+2, y+14, 8, 2, '#000');
+  ctx.globalAlpha = 1;
+  // 背包
+  px(x+1, y+5, 2, 6, C.metalDark);
+  // 身体
+  px(x+3, y+5, 6, 8, C.suit);
+  px(x+3, y+5, 6, 2, '#fff');
+  px(x+3, y+11, 6, 2, C.suitDark);
+  // 头盔
+  px(x+3, y+1, 6, 5, C.suit);
+  px(x+3, y+1, 6, 1, '#fff');
+  // 面罩
+  px(x+4, y+2, 4, 3, C.visor);
+  px(x+4, y+2, 4, 1, C.visorLight);
+  px(x+5, y+3, 1, 1, '#fff');
+  // 表情（士气）
+  if(mood==='sad'){
+    px(x+5, y+3, 1, 1, C.red);
+  }
+  // 腿（动画）
+  if(frame){
+    px(x+3, y+13, 2, 3, C.suit);
+    px(x+7, y+13, 2, 3, C.suitDark);
+  } else {
+    px(x+3, y+13, 2, 3, C.suitDark);
+    px(x+7, y+13, 2, 3, C.suit);
+  }
+  // 手臂
+  px(x+2, y+7, 1, 4, C.suit);
+  px(x+9, y+7, 1, 4, C.suit);
+}
+
+// ---- 月球地表 ----
+function generateTerrain(){
+  const t = [];
+  for(let i=0;i<GRID_W*GRID_H;i++){
+    t.push({
+      v: Math.random(),
+      crater: Math.random()<0.08,
+      rock: Math.random()<0.06,
+    });
+  }
+  // 添加几个大陨石坑
+  for(let k=0;k<5;k++){
+    const cx = Math.floor(Math.random()*GRID_W);
+    const cy = Math.floor(Math.random()*GRID_H);
+    const r = 1+Math.floor(Math.random()*2);
+    for(let dy=-r;dy<=r;dy++) for(let dx=-r;dx<=r;dx++){
+      const x=cx+dx, y=cy+dy;
+      if(x<0||x>=GRID_W||y<0||y>=GRID_H) continue;
+      if(dx*dx+dy*dy<=r*r) t[y*GRID_W+x].crater=true;
+    }
+  }
+  return t;
+}
+let terrain = generateTerrain();
+
+function drawTerrain(){
+  const sx = Math.floor(G.scrollX), sy = Math.floor(G.scrollY);
+  const ox = -(G.scrollX - sx) * TILE;
+  const oy = -(G.scrollY - sy) * TILE;
+  for(let dy=-1;dy<=VIEW_H+1;dy++){
+    for(let dx=-1;dx<=VIEW_W+1;dx++){
+      const gx = sx+dx, gy = sy+dy;
+      if(gx<0||gx>=GRID_W||gy<0||gy>=GRID_H) continue;
+      const t = terrain[gy*GRID_W+gx];
+      const x = ox + dx*TILE, y = oy + dy*TILE;
+      // 基础地表
+      const base = t.v>0.7?C.regolith3 : t.v>0.4?C.regolith2 : C.regolith1;
+      px(x, y, TILE, TILE, base);
+      // 噪点
+      for(let i=0;i<8;i++){
+        const nx = x + ((t.v*100+i*37)%TILE);
+        const ny = y + ((t.v*200+i*53)%TILE);
+        px(nx, ny, 1, 1, t.v>0.5?C.regolithDark:base);
+      }
+      // 陨石坑
+      if(t.crater){
+        px(x+8, y+8, 24, 24, C.crater);
+        px(x+10, y+10, 20, 20, '#1a1820');
+        px(x+12, y+12, 16, 16, '#0a0810');
+        px(x+8, y+8, 24, 2, C.craterRim);
+        px(x+8, y+8, 2, 24, C.craterRim);
+      }
+      // 岩石
+      if(t.rock && !t.crater){
+        const rx = x+10+(t.v*20|0), ry = y+12+(t.v*16|0);
+        px(rx, ry, 6, 4, C.regolithDark);
+        px(rx+1, ry-1, 4, 2, C.regolith3);
+        px(rx+1, ry+3, 4, 1, '#1a1820');
+      }
+    }
+  }
+}
+
+// ---- 天空 ----
+function drawSky(){
+  // 作为装饰叠加层，绘制在右上角（地球+星空+太阳）
+  const dayNess = isDay();
+  // 星星（夜晚）——散布在画面上半部
+  if(!dayNess){
+    for(let i=0;i<30;i++){
+      const sx = (i*73+13)%(canvasW-60);
+      const sy = (i*37+7)%(canvasH*0.18);
+      const tw = Math.sin(G.time*Math.PI*2 + i)*0.5+0.5;
+      ctx.globalAlpha = 0.3+tw*0.5;
+      px(sx, sy, 1, 1, i%5===0?C.star:C.starDim);
+    }
+    ctx.globalAlpha = 1;
+  }
+  // 地球（右上角）
+  const ex = canvasW - 28, ey = 22;
+  const er = 11;
+  // 光晕
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = C.earth;
+  ctx.beginPath(); ctx.arc(ex, ey, er+4, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha = 1;
+  // 本体
+  ctx.fillStyle = C.earth;
+  ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI*2); ctx.fill();
+  // 陆地
+  ctx.fillStyle = C.earthLand;
+  const rot = G.day * 0.3;
+  for(let i=0;i<5;i++){
+    const a = rot + i*1.2;
+    const lx = ex + Math.cos(a)*er*0.6;
+    const ly = ey + Math.sin(a)*er*0.4;
+    ctx.fillRect(lx-2, ly-1, 4, 2);
+  }
+  // 云
+  ctx.fillStyle = C.earthCloud;
+  ctx.globalAlpha = 0.5;
+  ctx.fillRect(ex-5, ey-4, 4, 2);
+  ctx.fillRect(ex+2, ey+2, 5, 2);
+  ctx.globalAlpha = 1;
+  // 阴影侧（立体感）
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.beginPath(); ctx.arc(ex+3, ey+2, er, 0, Math.PI*2); ctx.fill();
+  // 重绘本体+陆地（让阴影只覆盖右下）
+  ctx.fillStyle = C.earth;
+  ctx.beginPath(); ctx.arc(ex, ey, er, 0, Math.PI*2); ctx.fill();
+  ctx.fillStyle = C.earthLand;
+  for(let i=0;i<5;i++){
+    const a = rot + i*1.2;
+    const lx = ex + Math.cos(a)*er*0.6;
+    const ly = ey + Math.sin(a)*er*0.4;
+    ctx.fillRect(lx-2, ly-1, 4, 2);
+  }
+  // 太阳（白天清晨低空）
+  if(dayNess && G.time < 0.35){
+    const sunX = canvasW * (G.time/0.35) * 0.7 + 30;
+    const sunY = 22;
+    ctx.fillStyle = C.sun;
+    ctx.beginPath(); ctx.arc(sunX, sunY, 7, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = C.sunCore;
+    ctx.beginPath(); ctx.arc(sunX, sunY, 3, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+function isDay(){
+  return G.time >= 0.0 && G.time < 0.5;
+}
+
+// ---- 粒子 ----
+function spawnParticles(x, y, type){
+  if(type==='build'){
+    for(let i=0;i<12;i++){
+      G.particles.push({
+        x:x+(Math.random()-0.5)*20, y:y+(Math.random()-0.5)*10,
+        vx:(Math.random()-0.5)*2, vy:-Math.random()*2-1,
+        life:30, c:C.dust, size:1+Math.random()*2,
+      });
+    }
+  } else if(type==='spark'){
+    for(let i=0;i<8;i++){
+      const a = Math.random()*Math.PI*2;
+      G.particles.push({
+        x, y, vx:Math.cos(a)*2, vy:Math.sin(a)*2,
+        life:20, c:C.spark, size:1,
+      });
+    }
+  }
+}
+
+function updateParticles(dt){
+  for(let i=G.particles.length-1;i>=0;i--){
+    const p = G.particles[i];
+    p.x += p.vx; p.y += p.vy;
+    p.vy += 0.05;
+    p.life--;
+    if(p.life<=0) G.particles.splice(i,1);
+  }
+  // 浮动文字
+  for(let i=G.floats.length-1;i>=0;i--){
+    const f = G.floats[i];
+    f.y -= 0.5; f.life--;
+    if(f.life<=0) G.floats.splice(i,1);
+  }
+}
+
+function drawParticles(){
+  for(const p of G.particles){
+    ctx.globalAlpha = Math.min(1, p.life/20);
+    px(p.x, p.y, p.size, p.size, p.c);
+  }
+  ctx.globalAlpha = 1;
+  // 浮动文字
+  ctx.font = 'bold 9px monospace';
+  ctx.textAlign = 'center';
+  for(const f of G.floats){
+    ctx.globalAlpha = Math.min(1, f.life/30);
+    ctx.fillStyle = f.c;
+    ctx.fillText(f.text, f.x, f.y);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function floatText(x, y, text, c){
+  G.floats.push({x, y, text, c, life:40});
+}
+
+// ---- 月球车 ----
+function updateRover(dt){
+  const r = G.rover;
+  r.t += dt;
+  if(r.t > 2){
+    r.t = 0;
+    // 选择新目标
+    r.tx = 2 + Math.floor(Math.random()*(GRID_W-4));
+    r.ty = 2 + Math.floor(Math.random()*(GRID_H-4));
+  }
+  // 移动
+  const dx = r.tx - r.x, dy = r.ty - r.y;
+  const d = Math.hypot(dx, dy);
+  if(d > 0.1){
+    r.x += dx/d * 0.02;
+    r.y += dy/d * 0.02;
+  }
+}
+
+function drawRover(){
+  const r = G.rover;
+  const sx = (r.x - G.scrollX) * TILE;
+  const sy = (r.y - G.scrollY) * TILE;
+  if(sx < -20 || sx > canvasW+20 || sy < -20 || sy > canvasH+20) return;
+  // 影子
+  ctx.globalAlpha = 0.3;
+  px(sx-4, sy+6, 12, 2, '#000');
+  ctx.globalAlpha = 1;
+  // 车身
+  px(sx-5, sy-2, 12, 6, C.yellow);
+  px(sx-5, sy-2, 12, 2, C.sunCore);
+  px(sx-5, sy+2, 12, 2, C.yellowDark);
+  // 车轮
+  px(sx-5, sy+4, 3, 3, C.metalDark);
+  px(sx+2, sy+4, 3, 3, C.metalDark);
+  // 天线
+  px(sx+1, sy-5, 1, 3, C.metal);
+  px(sx, sy-6, 3, 1, C.red);
+}
+
+// ---- 船员移动 ----
+function updateCrew(dt){
+  for(const c of G.crew){
+    c.moveT += dt;
+    if(c.moveT > 1.5 + Math.random()*2){
+      c.moveT = 0;
+      // 选择目标：去工作的建筑或随机走
+      if(c.job != null && G.grid[c.job]){
+        const b = G.grid[c.job];
+        c.tx = b.gx + 0.3 + Math.random()*0.4;
+        c.ty = b.gy + 0.3 + Math.random()*0.4;
+      } else {
+        c.tx = Math.max(1, Math.min(GRID_W-2, c.x + (Math.random()-0.5)*4));
+        c.ty = Math.max(1, Math.min(GRID_H-2, c.y + (Math.random()-0.5)*4));
+      }
+    }
+    const dx = c.tx - c.x, dy = c.ty - c.y;
+    const d = Math.hypot(dx, dy);
+    if(d > 0.05){
+      c.x += dx/d * 0.015;
+      c.y += dy/d * 0.015;
+      c.frame = (c.frame + dt*4) % 2;
+    }
+  }
+}
+
+function drawCrew(){
+  for(const c of G.crew){
+    const sx = (c.x - G.scrollX) * TILE;
+    const sy = (c.y - G.scrollY) * TILE;
+    if(sx < -20 || sx > canvasW+20 || sy < -20 || sy > canvasH+20) continue;
+    drawAstronaut(sx-5, sy-8, c.frame|0, c.mood);
+  }
+}
+
+// ---- 主渲染 ----
+function render(){
+  ctx.fillStyle = '#0a0e1a';
+  ctx.fillRect(0,0,canvasW,canvasH);
+  // 屏幕震动
+  ctx.save();
+  if(G.shake > 0){
+    ctx.translate((Math.random()-0.5)*G.shake, (Math.random()-0.5)*G.shake);
+  }
+  drawTerrain();
+  // 建筑
+  const sx = Math.floor(G.scrollX), sy = Math.floor(G.scrollY);
+  const ox = -(G.scrollX - sx) * TILE;
+  const oy = -(G.scrollY - sy) * TILE;
+  for(let dy=-1;dy<=VIEW_H+1;dy++){
+    for(let dx=-1;dx<=VIEW_W+1;dx++){
+      const gx = sx+dx, gy = sy+dy;
+      if(gx<0||gx>=GRID_W||gy<0||gy>=GRID_H) continue;
+      const idx = gy*GRID_W+gx;
+      const b = G.grid[idx];
+      if(!b) continue;
+      const x = ox + dx*TILE, y = oy + dy*TILE;
+      b.t += 0.5;
+      let anim = 0;
+      const ca = G.constructAnim.find(a=>a.idx===idx);
+      if(ca){ anim = Math.min(1, ca.t); }
+      drawBuilding(b.type, x, y, b.t, anim);
+    }
+  }
+  drawCrew();
+  drawRover();
+  drawParticles();
+  drawSky();
+  // 建造预览
+  if(G.placeMode && G.hover){
+    const hx = (G.hover.x - G.scrollX) * TILE;
+    const hy = (G.hover.y - G.scrollY) * TILE;
+    const def = BDEF[G.placeMode];
+    const can = canPlace(G.hover.x, G.hover.y);
+    ctx.globalAlpha = 0.6;
+    drawBuilding(G.placeMode, hx, hy, 0, 1);
+    ctx.globalAlpha = 1;
+    // 边框
+    ctx.strokeStyle = can?C.good:C.bad;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(hx, hy, TILE, TILE);
+  }
+  // 选中高亮
+  if(G.selected != null && G.grid[G.selected]){
+    const b = G.grid[G.selected];
+    const x = (b.gx - G.scrollX) * TILE;
+    const y = (b.gy - G.scrollY) * TILE;
+    ctx.strokeStyle = C.accent;
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x-1, y-1, TILE+2, TILE+2);
+  }
+  ctx.restore();
+  // 夜晚遮罩
+  if(!isDay()){
+    ctx.fillStyle = 'rgba(5,8,24,0.35)';
+    ctx.fillRect(0,0,canvasW,canvasH);
+  }
+}
+
+function canPlace(gx, gy){
+  if(gx<0||gx>=GRID_W||gy<0||gy>=GRID_H) return false;
+  const idx = gy*GRID_W+gx;
+  if(G.grid[idx]) return false;
+  const def = BDEF[G.placeMode];
+  if(!def) return false;
+  for(const k in def.cost){
+    if(G.res[k] < def.cost[k]) return false;
+  }
+  return true;
+}
+
+// ---- 资源更新 ----
+function tickResources(dt){
+  const day = isDay();
+  // 能耗降低科技
+  const useMult = G.researchDone.energy2 ? 0.8 : 1;
+  // 生产
+  for(let i=0;i<G.grid.length;i++){
+    const b = G.grid[i];
+    if(!b) continue;
+    const def = BDEF[b.type];
+    if(def.prod){
+      let mult = 1;
+      // 科技加成
+      if(G.researchDone.solar2 && b.type==='solar') mult *= 1.5;
+      if(G.researchDone.oxygen2 && b.type==='oxygen') mult *= 1.5;
+      if(G.researchDone.mine2 && b.type==='mine') mult *= 1.5;
+      if(G.researchDone.farm2 && b.type==='greenhouse') mult *= 1.5;
+      if(G.researchDone.lab2 && b.type==='lab') mult *= 1.8;
+      // 地表改造全产能加成
+      if(G.researchDone.terraform) mult *= 1.2;
+      // 机器人车间加成
+      if(G.researchDone.robot2 && b.type==='droidbay') mult *= 2;
+      // 贸易站被动产金币
+      if(b.type==='tradepost'){
+        let tradeMult = G.researchDone.trade2 ? 1.5 : 1;
+        G.res.credit += 0.3 * tradeMult * dt;
+      }
+      // 士气加成
+      mult *= 0.5 + G.morale/100;
+      // 船员加成
+      if(def.needCrew){
+        const crew = b.crew.length;
+        if(crew === 0) continue; // 需要船员才能生产
+        mult *= 1 + crew*0.3;
+      }
+      for(const k in def.prod){
+        if(def.dayOnly && !day) continue;
+        G.res[k] += def.prod[k] * mult * dt;
+      }
+    }
+    if(def.use){
+      for(const k in def.use){
+        G.res[k] -= def.use[k] * useMult * dt;
+      }
+    }
+    if(def.morale){
+      G.morale = Math.min(100, G.morale + def.morale * dt);
+    }
+  }
+  // 医务室与被动建筑效果
+  let healActive = false;
+  for(let i=0;i<G.grid.length;i++){
+    const b = G.grid[i];
+    if(!b) continue;
+    if(b.type==='medbay'){
+      const healMult = G.researchDone.medbay2 ? 0.6 : 0.3;
+      G.healTimer = Math.min(10, G.healTimer + healMult * dt);
+      if(G.healTimer >= 5 && G.morale < 85) G.morale = Math.min(100, G.morale + healMult * 0.5 * dt);
+      healActive = true;
+    }
+  }
+  // 船员消耗
+  const crewCount = G.crew.length;
+    // 水循环站减少氧气消耗
+  let oxyMult = 1;
+  for(let i=0; i<G.grid.length; i++){
+    if(G.grid[i] && G.grid[i].type==='waterpur'){ oxyMult = 0.5; break; }
+  }
+  G.res.oxygen -= crewCount * 0.15 * oxyMult * dt;
+  G.res.food -= crewCount * 0.12 * dt;
+  // 士气下降（如果资源不足）
+  if(G.res.oxygen < 5 || G.res.food < 5){
+    G.morale = Math.max(0, G.morale - 5*dt);
+    G.deathTimer += dt;
+  } else {
+    G.deathTimer = Math.max(0, G.deathTimer - dt*0.5);
+    if(G.morale < 50){
+      G.morale = Math.min(100, G.morale + 1*dt);
+    }
+  }
+  // 资源耗尽+士气归零=Game Over
+  if(G.deathTimer > 30 && G.morale <= 0){
+    showGameOver();
+    return;
+  }
+  // 限制
+  for(const r of RES){
+    if(G.res[r.key] < 0) G.res[r.key] = 0;
+    if(G.res[r.key] > G.cap[r.key]) G.res[r.key] = G.cap[r.key];
+  }
+  // 船员心情
+  for(const c of G.crew){
+    c.mood = G.morale > 60 ? 'happy' : G.morale > 30 ? 'neutral' : 'sad';
+  }
+}
+
+// ---- 时间推进 ----
+function update(dt){
+  if(G.paused || G.gameOver) return;
+  const sm = G.speed;
+  G.time += dt * 0.015 * sm;
+  if(G.time >= 1){
+    G.time -= 1;
+    G.day++;
+    onNewDay();
+  }
+  tickResources(dt * sm);
+  updateCrew(dt * sm);
+  updateRover(dt * sm);
+  updateParticles(dt * sm);
+  // 建造动画
+  for(let i=G.constructAnim.length-1;i>=0;i--){
+    G.constructAnim[i].t += dt*2;
+    if(G.constructAnim[i].t >= 1) G.constructAnim.splice(i,1);
+  }
+  if(G.shake > 0) G.shake = Math.max(0, G.shake - dt*30);
+  // 事件检查
+  if(G.day >= G.nextEventDay && !G.eventActive){
+    triggerEvent();
+  }
+}
+
+function onNewDay(){
+  Sound.day();
+  // 每日自动获得10金币
+  G.res.credit += 10;
+  // 积分过期系统：每天获得2积分，第15天起未研发"积分保护"则过期
+  G.expiryPoints += 2;
+  if(G.day >= G.expiryDay && !G.researchDone.expiryProtect){
+    const expLoss = Math.floor(G.expiryPoints * 0.3);
+    G.expiryPoints -= expLoss;
+    G.expired += expLoss;
+    if(!G.expiryWarned && expLoss > 0){
+      G.expiryWarned = true;
+      G.paused = true;
+      showExpiryWarning(expLoss);
+    }
+    if(G.expiryPoints < 0) G.expiryPoints = 0;
+  }
+  // 医疗系统
+  if(G.healTimer > 0) G.healTimer--;
+  // 清理已完成的贸易要约（资源已在接受时即时交换）
+  G.tradeOffers = G.tradeOffers.filter(t=>!t.accepted);
+  // 检查胜利
+  checkWin();
+  // 检查成就
+  checkAchievements();
+  // 每日自动保存
+  saveGame();
+}
+
+function checkWin(){
+  if(G.won) return;
+  // 月球核心已建造 + 20船员
+  let hasCore = false;
+  for(const b of G.grid) if(b && b.type==='core'){ hasCore = true; break; }
+  if(hasCore && G.crew.length >= 20){
+    G.won = true;
+    showWin();
+  }
+}
+
+function checkAchievements(){
+  const add = (id, name)=>{
+    if(!G.achievements.has(id)){
+      G.achievements.add(id);
+      toast('成就解锁：'+name, 'good');
+      Sound.success();
+    }
+  };
+  if(G.crew.length >= 5) add('crew5','小队成立');
+  if(G.crew.length >= 10) add('crew10','殖民地');
+  if(G.crew.length >= 20) add('crew20','月球都市');
+  if(G.day >= 10) add('day10','十日生存');
+  if(G.day >= 30) add('day30','月球老兵');
+  if(Object.keys(G.researchDone).length >= 3) add('tech3','科研先锋');
+  if(Object.keys(G.researchDone).length >= 7) add('tech7','科技大师');
+  if(G.res.credit >= 500) add('rich','富甲月球');
+  if(G.res.credit >= 1500) add('rich2','月球大亨');
+  if(G.day >= 50) add('day50','月球传奇');
+  if(Object.keys(G.researchDone).length >= 12) add('tech12','科学家');
+  if(countBuildings() >= 20) add('build20','繁荣殖民地');
+  for(let i=0;i<G.grid.length;i++){
+    if(G.grid[i] && G.grid[i].type==='medbay'){ add('medbay','医疗保障'); break; }
+  }
+  for(let i=0;i<G.grid.length;i++){
+    if(G.grid[i] && G.grid[i].type==='radar'){ add('radar','安全第一'); break; }
+  }
+  for(let i=0;i<G.grid.length;i++){
+    if(G.grid[i] && G.grid[i].type==='core'){ add('core','核心启动'); break; }
+  }
+}
+
+// ---- 事件系统 ----
+const EVENTS = [
+  {
+    title:'陨石撞击', desc:'一颗陨石击中了基地！部分建筑受损。',
+    good:false, weight:3,
+    apply(){
+      const buildings = [];
+      for(let i=0;i<G.grid.length;i++) if(G.grid[i]) buildings.push(i);
+      if(buildings.length===0) return;
+      const idx = buildings[Math.floor(Math.random()*buildings.length)];
+      G.grid[idx] = null;
+      G.shake = 8;
+      spawnParticles(0,0,'spark');
+      Sound.alert();
+    }
+  },
+  {
+    title:'冰矿发现', desc:'勘探队发现了地下冰矿！获得大量矿物。',
+    good:true, weight:3,
+    apply(){
+      const amt = 30 + Math.floor(Math.random()*30);
+      G.res.mineral = Math.min(G.cap.mineral, G.res.mineral + amt);
+      floatText(canvasW/2, canvasH/2, '+'+amt+' 矿物', C.good);
+      Sound.coin();
+    }
+  },
+  {
+    title:'太阳能风暴', desc:'太阳活动剧烈，太阳能板效率大增！',
+    good:true, weight:2,
+    apply(){
+      G.res.energy = Math.min(G.cap.energy, G.res.energy + 50);
+      floatText(canvasW/2, canvasH/2, '+50 能量', C.yellow);
+      Sound.coin();
+    }
+  },
+  {
+    title:'贸易商船', desc:'地球贸易船到达，可用金币换取资源。',
+    good:true, weight:3, custom:'trade',
+  },
+  {
+    title:'新移民', desc:'一批新移民希望加入殖民地！',
+    good:true, weight:3,
+    apply(){
+      const names = ['伽马','德尔塔','艾普西龙','泽塔','伊塔','西塔','艾欧塔','卡帕'];
+      const jobs = [{mining:3,farming:2,science:2,eng:2},{mining:2,farming:3,science:3,eng:2},{mining:2,farming:2,science:4,eng:3}];
+      const n = names[Math.floor(Math.random()*names.length)];
+      const j = jobs[Math.floor(Math.random()*jobs.length)];
+      addCrew(n+' '+Math.floor(Math.random()*100), j);
+      floatText(canvasW/2, canvasH/2, '+1 船员', C.good);
+      Sound.success();
+    }
+  },
+  {
+    title:'设备故障', desc:'一台设备出现故障，损失部分能量。',
+    good:false, weight:2,
+    apply(){
+      G.res.energy = Math.max(0, G.res.energy - 30);
+      floatText(canvasW/2, canvasH/2, '-30 能量', C.bad);
+      Sound.alert();
+    }
+  },
+  {
+    title:'科学突破', desc:'研究人员取得了重大突破！获得科研点。',
+    good:true, weight:2,
+    apply(){
+      const amt = 20 + Math.floor(Math.random()*20);
+      G.res.research += amt;
+      floatText(canvasW/2, canvasH/2, '+'+amt+' 科研', C.glassLight);
+      Sound.success();
+    }
+  },
+  {
+    title:'月面日出', desc:'壮丽的地球升起，船员士气大振！',
+    good:true, weight:2,
+    apply(){
+      G.morale = Math.min(100, G.morale + 20);
+      floatText(canvasW/2, canvasH/2, '+20 士气', C.good);
+      Sound.day();
+    }
+  },
+  {
+    title:'月震', desc:'轻微月震震动了基地，部分资源散落。',
+    good:false, weight:2,
+    apply(){
+      const loss = 10 + Math.floor(Math.random()*15);
+      G.res.mineral = Math.max(0, G.res.mineral - loss);
+      G.shake = 5;
+      floatText(canvasW/2, canvasH/2, '-'+loss+' 矿物', C.bad);
+      Sound.alert();
+    }
+  },
+  {
+    title:'富矿脉发现', desc:'采矿场发现了富矿脉，矿物产量临时大增！',
+    good:true, weight:2,
+    apply(){
+      const amt = 40 + Math.floor(Math.random()*40);
+      G.res.mineral = Math.min(G.cap.mineral, G.res.mineral + amt);
+      floatText(canvasW/2, canvasH/2, '+'+amt+' 矿物', C.good);
+      Sound.coin();
+    }
+  },
+  {
+    title:'船员训练', desc:'一名船员完成了专项训练，能力提升！',
+    good:true, weight:2,
+    apply(){
+      if(G.crew.length===0) return;
+      const c = G.crew[Math.floor(Math.random()*G.crew.length)];
+      const stats = ['mining','farming','science','eng'];
+      const stat = stats[Math.floor(Math.random()*stats.length)];
+      c[stat] = Math.min(9, c[stat]+2);
+      floatText(canvasW/2, canvasH/2, c.name+' '+stat+'+2', C.good);
+      Sound.success();
+    }
+  },
+  {
+    title:'沙暴来袭', desc:'月面沙暴覆盖了太阳能板，能量暂停恢复。',
+    good:false, weight:2,
+    apply(){
+      G.res.energy = Math.max(0, G.res.energy - 20);
+      G.morale = Math.max(0, G.morale - 5);
+      floatText(canvasW/2, canvasH/2, '-20 能量 -5 士气', C.bad);
+      Sound.alert();
+    }
+  },
+  {
+    title:'月面探测', desc:'月球车发现了稀有氦-3矿藏！获得大量科研点。',
+    good:true, weight:2,
+    apply(){
+      const amt = 30 + Math.floor(Math.random()*40);
+      G.res.research += amt;
+      floatText(canvasW/2, canvasH/2, '+' +amt+' 科研', C.glassLight);
+      Sound.success();
+    }
+  },
+  {
+    title:'殖民地节日', desc:'今天是殖民地成立纪念日，船员们举行了小型庆祝活动！',
+    good:true, weight:2,
+    apply(){
+      G.morale = Math.min(100, G.morale + 15);
+      G.res.credit += 20;
+      floatText(canvasW/2, canvasH/2, '+20 金币 +15 士气', C.good);
+      Sound.day();
+    }
+  },
+  {
+    title:'氧气泄漏', desc:'管道系统出现裂缝导致氧气泄漏，需紧急修复。',
+    good:false, weight:2,
+    apply(){
+      const loss = 20 + Math.floor(Math.random()*30);
+      G.res.oxygen = Math.max(0, G.res.oxygen - loss);
+      G.morale = Math.max(0, G.morale - 8);
+      floatText(canvasW/2, canvasH/2, '-' +loss+' 氧气', C.bad);
+      Sound.alert();
+    }
+  },
+  {
+    title:'地球援助', desc:'地球总部空投了补给包！获得随机资源。',
+    good:true, weight:2,
+    apply(){
+      G.res.food = Math.min(G.cap.food, G.res.food + 25);
+      G.res.credit = Math.min(G.cap.credit, G.res.credit + 30);
+      G.res.energy = Math.min(G.cap.energy, G.res.energy + 25);
+      floatText(canvasW/2, canvasH/2, '+25食物 +30金币 +25能量', C.good);
+      Sound.coin();
+    }
+  },
+  {
+    title:'宇宙射线', desc:'异常宇宙射线影响了电子设备，损失部分科研点。',
+    good:false, weight:2,
+    apply(){
+      const loss = 15 + Math.floor(Math.random()*20);
+      G.res.research = Math.max(0, G.res.research - loss);
+      floatText(canvasW/2, canvasH/2, '-' +loss+' 科研', C.bad);
+      Sound.alert();
+    }
+  },
+  {
+    title:'作物丰收', desc:'温室的月球改良土壤效果显著，粮食大丰收！',
+    good:true, weight:2,
+    apply(){
+      const amt = 40 + Math.floor(Math.random()*30);
+      G.res.food = Math.min(G.cap.food, G.res.food + amt);
+      floatText(canvasW/2, canvasH/2, '+' +amt+' 食物', C.good);
+      Sound.coin();
+    }
+  },
+  {
+    title:'技术交流', desc:'其他月球站的技术专家来访，分享了一项技术。',
+    good:true, weight:2,
+    apply(){
+      const amt = 25 + Math.floor(Math.random()*20);
+      G.res.research += amt;
+      G.morale = Math.min(100, G.morale + 5);
+      floatText(canvasW/2, canvasH/2, '+' +amt+' 科研 +5 士气', C.good);
+      Sound.success();
+    }
+  },
+  {
+    title:'物资短缺', desc:'物流中断导致部分补给延误。',
+    good:false, weight:2,
+    apply(){
+      G.res.food = Math.max(0, G.res.food - 15);
+      G.morale = Math.max(0, G.morale - 10);
+      floatText(canvasW/2, canvasH/2, '-15食物 -10士气', C.bad);
+      Sound.alert();
+    }
+  },
+  {
+    title:'科研竞赛', desc:'全球月球科研竞赛开赛，实验室效率临时大增！',
+    good:true, weight:2,
+    apply(){
+      G.res.research += 50;
+      G.morale = Math.min(100, G.morale + 10);
+      floatText(canvasW/2, canvasH/2, '+50 科研 +10 士气', C.glassLight);
+      Sound.success();
+    }
+  },
+  {
+    title:'医疗紧急', desc:'一名船员突发急病！如有医务室将自动救治。',
+    good:false, weight:2,
+    apply(){
+      let hasMedbay = false;
+      for(const b of G.grid) if(b && b.type==='medbay'){ hasMedbay = true; break; }
+      if(hasMedbay){
+        floatText(canvasW/2, canvasH/2, '医务室已处理紧急情况', C.good);
+        Sound.success();
+      } else {
+        G.morale = Math.max(0, G.morale - 15);
+        if(G.crew.length > 1){
+          const idx = Math.floor(Math.random()*G.crew.length);
+          const removed = G.crew.splice(idx, 1)[0];
+          toast(removed.name+' 因病离世...', 'bad');
+        }
+        floatText(canvasW/2, canvasH/2, '无医务室！-15士气', C.bad);
+        Sound.alert();
+      }
+    },
+    filter(){ return G.crew.length > 0; }
+  },
+  {
+    title:'雷达预警', desc:'雷达站提前探测到了陨石威胁，成功规避！',
+    good:true, weight:2,
+    apply(){
+      let hasRadar = false;
+      for(const b of G.grid) if(b && b.type==='radar'){ hasRadar = true; break; }
+      if(hasRadar){
+        const shield = G.researchDone.radar2 ? 0.9 : 0.5;
+        G.res.credit += Math.floor(30 * shield);
+        floatText(canvasW/2, canvasH/2, '雷达站成功拦截陨石！+30金币', C.good);
+        Sound.success();
+      } else {
+        G.res.energy = Math.max(0, G.res.energy - 15);
+        G.shake = 4;
+        floatText(canvasW/2, canvasH/2, '陨石擦过！-15能量', C.bad);
+        Sound.alert();
+      }
+    }
+  },
+];
+
+function triggerEvent(){
+  // 需要通讯塔才能触发部分事件
+  let hasComm = false;
+  for(const b of G.grid) if(b && b.type==='comm'){ hasComm = true; break; }
+  if(!hasComm){
+    G.nextEventDay = G.day + 3 + Math.floor(Math.random()*3);
+    return;
+  }
+  G.eventActive = true;
+  G.paused = true;
+  // 加权随机（过滤掉不需要的事件）
+  const pool = EVENTS.filter(e => !e.filter || e.filter());
+  let total = pool.reduce((s,e)=>s+(e.weight||1),0);
+  let r = Math.random()*total;
+  let ev;
+  for(const e of pool){ r -= (e.weight||1); if(r<=0){ ev=e; break; } }
+  if(!ev) ev = pool[0];
+  G.currentEvent = ev;
+  showEventPopup(ev);
+  G.nextEventDay = G.day + 3 + Math.floor(Math.random()*4);
+  G.events++;
+  G.stats.totalEvents++;
+}
+
+function showTradeMenu(){
+  const tradeMult = G.researchDone.trade2 ? 1.5 : 1;
+  const offers = [
+    {give:'credit', giveAmt:50, get:'mineral', getAmt:Math.floor(30*tradeMult)},
+    {give:'credit', giveAmt:50, get:'food', getAmt:Math.floor(30*tradeMult)},
+    {give:'mineral', giveAmt:30, get:'credit', getAmt:Math.floor(60*tradeMult)},
+    {give:'credit', giveAmt:80, get:'research', getAmt:Math.floor(25*tradeMult)},
+    {give:'food', giveAmt:40, get:'credit', getAmt:Math.floor(50*tradeMult)},
+    {give:'credit', giveAmt:120, get:'oxygen', getAmt:Math.floor(60*tradeMult)},
+  ];
+  G.tradeOffers = offers;
+  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>贸易站</h2>';
+  html += '<div style="text-align:center;font-size:10px;color:var(--dim);margin-bottom:8px">当前金币: <b style="color:var(--accent)">'+Math.floor(G.res.credit)+'</b>'+(tradeMult>1?' · <span style="color:var(--good)">效率+50%</span>':'')+'</div>';
+  html += '<div style="display:flex;flex-direction:column;gap:5px">';
+  for(let i=0;i<offers.length;i++){
+    const o = offers[i];
+    const giveName = RES.find(r=>r.key===o.give).name;
+    const getName = RES.find(r=>r.key===o.get).name;
+    const can = G.res[o.give] >= o.giveAmt;
+    html += '<button class="evbtn" style="background:'+(can?'#2a3060':'#3a2020')+';color:'+(can?'#e8ecff':'#888')+'" data-trade="'+i+'" '+(can?'':'disabled')+'>'+o.giveAmt+' '+giveName+' → '+o.getAmt+' '+getName+'</button>';
+  }
+  html += '</div>';
+  showOverlay(html);
+  document.querySelectorAll('[data-trade]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const i = parseInt(btn.dataset.trade);
+      const o = G.tradeOffers[i];
+      if(G.res[o.give] >= o.giveAmt){
+        G.res[o.give] -= o.giveAmt;
+        G.res[o.get] = Math.min(G.cap[o.get], G.res[o.get] + o.getAmt);
+        o.accepted = true;
+        floatText(canvasW/2, canvasH/2, '交易完成！', C.good);
+        Sound.coin();
+        btn.disabled = true;
+        btn.style.opacity = 0.5;
+        // 刷新显示
+        setTimeout(()=>showTradeMenu(), 300);
+      }
+    };
+  });
+}
+
+function showEventPopup(ev){
+  const box = document.getElementById('evbox');
+  let html = '<h3>★ '+ev.title+' ★</h3>';
+  html += '<canvas id="evcanvas" width="48" height="48"></canvas>';
+  html += '<p>'+ev.desc+'</p>';
+  if(ev.custom === 'trade'){
+    // 贸易选项
+    const offers = [
+      {give:'credit', giveAmt:50, get:'mineral', getAmt:30},
+      {give:'credit', giveAmt:50, get:'food', getAmt:30},
+      {give:'mineral', giveAmt:30, get:'credit', getAmt:60},
+      {give:'credit', giveAmt:80, get:'research', getAmt:25},
+    ];
+    G.tradeOffers = offers;
+    html += '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">';
+    for(let i=0;i<offers.length;i++){
+      const o = offers[i];
+      const giveName = RES.find(r=>r.key===o.give).name;
+      const getName = RES.find(r=>r.key===o.get).name;
+      const can = G.res[o.give] >= o.giveAmt;
+      html += '<button class="evbtn" style="background:'+(can?'#2a3060':'#3a2020')+';color:'+(can?'#e8ecff':'#888')+'" data-trade="'+i+'" '+(can?'':'disabled')+'>'+o.giveAmt+' '+giveName+' → '+o.getAmt+' '+getName+'</button>';
+    }
+    html += '</div>';
+    html += '<button class="evbtn" id="ev-close">关闭</button>';
+  } else {
+    html += '<button class="evbtn" id="ev-ok">确定</button>';
+  }
+  box.innerHTML = html;
+  document.getElementById('eventpop').classList.add('on');
+  // 绘制事件图标
+  const ec = document.getElementById('evcanvas');
+  if(ec){
+    const ectx = ec.getContext('2d');
+    ectx.imageSmoothingEnabled = false;
+    drawEventIcon(ectx, ev);
+  }
+  // 绑定按钮
+  if(ev.custom === 'trade'){
+    box.querySelectorAll('[data-trade]').forEach(btn=>{
+      btn.onclick = ()=>{
+        const i = parseInt(btn.dataset.trade);
+        const o = G.tradeOffers[i];
+        if(G.res[o.give] >= o.giveAmt){
+          G.res[o.give] -= o.giveAmt;
+          G.res[o.get] = Math.min(G.cap[o.get], G.res[o.get] + o.getAmt);
+          o.accepted = true;
+          floatText(canvasW/2, canvasH/2, '交易完成！', C.good);
+          Sound.coin();
+          btn.disabled = true;
+          btn.style.opacity = 0.5;
+        }
+      };
+    });
+    document.getElementById('ev-close').onclick = closeEvent;
+  } else {
+    document.getElementById('ev-ok').onclick = ()=>{
+      ev.apply();
+      closeEvent();
+    };
+  }
+}
+
+function closeEvent(){
+  document.getElementById('eventpop').classList.remove('on');
+  G.eventActive = false;
+  G.paused = false;
+}
+
+function drawEventIcon(c, ev){
+  c.fillStyle = '#0a0e1a';
+  c.fillRect(0,0,48,48);
+  if(ev.title.includes('陨石')){
+    c.fillStyle = C.crater;
+    c.fillRect(8,8,32,32);
+    c.fillStyle = '#1a1820';
+    c.fillRect(12,12,24,24);
+    c.fillStyle = C.orange;
+    c.fillRect(20,4,8,8);
+    c.fillStyle = C.yellow;
+    c.fillRect(22,2,4,4);
+  } else if(ev.title.includes('冰矿')||ev.title.includes('矿物')){
+    c.fillStyle = C.purpleDark;
+    c.fillRect(10,20,28,16);
+    c.fillStyle = C.purple;
+    c.fillRect(14,16,8,8);
+    c.fillRect(26,14,8,10);
+    c.fillStyle = '#fff';
+    c.fillRect(16,18,2,2);
+    c.fillRect(28,16,2,2);
+  } else if(ev.title.includes('风暴')||ev.title.includes('能量')){
+    c.fillStyle = C.sun;
+    c.fillRect(16,16,16,16);
+    c.fillStyle = C.sunCore;
+    c.fillRect(20,20,8,8);
+    c.fillStyle = C.yellow;
+    c.fillRect(8,22,6,4);
+    c.fillRect(34,22,6,4);
+    c.fillRect(22,8,4,6);
+    c.fillRect(22,34,4,6);
+  } else if(ev.title.includes('贸易')){
+    c.fillStyle = C.metal;
+    c.fillRect(8,20,32,12);
+    c.fillStyle = C.yellow;
+    c.fillRect(12,24,8,4);
+    c.fillRect(24,24,8,4);
+    c.fillStyle = C.earth;
+    c.fillRect(20,4,8,8);
+  } else if(ev.title.includes('移民')||ev.title.includes('船员')){
+    c.fillStyle = C.suit;
+    c.fillRect(18,12,12,20);
+    c.fillStyle = C.visor;
+    c.fillRect(20,14,8,6);
+    c.fillStyle = C.metalDark;
+    c.fillRect(18,32,4,4);
+    c.fillRect(26,32,4,4);
+  } else if(ev.title.includes('故障')){
+    c.fillStyle = C.red;
+    c.fillRect(20,8,8,8);
+    c.fillStyle = C.yellow;
+    c.fillRect(22,10,4,4);
+    c.fillStyle = C.metalDark;
+    c.fillRect(12,20,24,16);
+    c.fillStyle = C.red;
+    c.fillRect(16,24,4,4);
+    c.fillRect(28,24,4,4);
+    c.fillRect(22,30,4,2);
+  } else if(ev.title.includes('科研')||ev.title.includes('突破')){
+    c.fillStyle = C.glass;
+    c.fillRect(12,12,24,24);
+    c.fillStyle = C.glassLight;
+    c.fillRect(14,14,8,4);
+    c.fillStyle = C.green;
+    c.fillRect(18,22,4,4);
+    c.fillRect(26,22,4,4);
+    c.fillStyle = C.yellow;
+    c.fillRect(22,28,4,2);
+  } else if(ev.title.includes('日出')||ev.title.includes('士气')){
+    c.fillStyle = C.earth;
+    c.fillRect(8,28,32,12);
+    c.fillStyle = C.earthLand;
+    c.fillRect(12,30,8,4);
+    c.fillRect(26,32,6,4);
+    c.fillStyle = C.sun;
+    c.fillRect(20,8,8,8);
+    c.fillStyle = C.sunCore;
+    c.fillRect(22,10,4,4);
+  } else if(ev.title.includes('月震')){
+    c.fillStyle = C.regolith2;
+    c.fillRect(4,20,40,20);
+    c.fillStyle = C.crater;
+    c.fillRect(10,24,12,8);
+    c.fillStyle = '#1a1820';
+    c.fillRect(12,26,8,4);
+    c.fillStyle = C.red;
+    c.fillRect(28,22,4,4);
+    c.fillRect(36,28,3,3);
+    c.fillStyle = C.yellow;
+    c.fillRect(6,14,4,2);
+    c.fillRect(38,14,4,2);
+  } else if(ev.title.includes('富矿')){
+    c.fillStyle = C.purpleDark;
+    c.fillRect(6,14,36,24);
+    c.fillStyle = C.purple;
+    c.fillRect(10,10,8,8);
+    c.fillRect(22,8,10,10);
+    c.fillRect(30,18,8,8);
+    c.fillStyle = '#fff';
+    c.fillRect(12,12,2,2);
+    c.fillRect(24,10,2,2);
+    c.fillRect(32,20,2,2);
+    c.fillStyle = C.yellow;
+    c.fillRect(16,22,4,4);
+  } else if(ev.title.includes('训练')){
+    c.fillStyle = C.suit;
+    c.fillRect(16,10,16,24);
+    c.fillStyle = C.visor;
+    c.fillRect(18,12,12,8);
+    c.fillStyle = C.yellow;
+    c.fillRect(22,14,4,4);
+    c.fillStyle = C.green;
+    c.fillRect(8,30,6,6);
+    c.fillRect(34,30,6,6);
+    c.fillStyle = C.greenDark;
+    c.fillRect(8,34,6,2);
+    c.fillRect(34,34,6,2);
+  } else if(ev.title.includes('沙暴')){
+    c.fillStyle = C.regolith3;
+    c.fillRect(0,16,48,24);
+    c.fillStyle = C.regolithDark;
+    c.fillRect(0,28,48,12);
+    c.fillStyle = C.dust;
+    for(let i=0;i<12;i++){
+      const dx=(i*7+3)%44, dy=10+(i*5)%20;
+      c.fillRect(dx,dy,3,1);
+    }
+    c.fillStyle = C.yellow;
+    c.fillRect(8,8,6,4);
+    c.fillRect(34,10,6,4);
+  
+  } else if(ev.title.includes('探测')||ev.title.includes('矿藏')||ev.title.includes('氦')){
+    c.fillStyle = C.purpleDark; c.fillRect(8,20,32,16);
+    c.fillStyle = C.purple; c.fillRect(12,16,8,8); c.fillRect(28,14,8,10);
+    c.fillStyle = C.yellow; c.fillRect(20,8,8,8);
+    c.fillStyle = C.sunCore; c.fillRect(22,10,4,4);
+    c.fillStyle = '#fff'; c.fillRect(14,18,2,2); c.fillRect(30,16,2,2);
+    c.fillStyle = C.green; c.fillRect(10,30,6,2); c.fillRect(32,28,6,2);
+  } else if(ev.title.includes('节日')||ev.title.includes('纪念')){
+    c.fillStyle = C.sunCore; c.fillRect(16,8,16,16);
+    c.fillStyle = C.yellow; c.fillRect(20,4,8,8);
+    c.fillStyle = C.metal; c.fillRect(8,24,32,8);
+    c.fillStyle = C.red; c.fillRect(12,28,4,4); c.fillRect(24,28,8,4); c.fillRect(36,28,2,4);
+    c.fillStyle = C.earth; c.fillRect(8,32,32,4);
+    c.fillStyle = '#fff'; c.fillRect(18,6,4,2); c.fillRect(28,28,2,2);
+  } else if(ev.title.includes('泄漏')||ev.title.includes('裂缝')){
+    c.fillStyle = C.metalDark; c.fillRect(8,14,32,20);
+    c.fillStyle = C.glass; c.fillRect(14,20,6,8); c.fillRect(28,20,6,8);
+    c.fillStyle = C.glassLight;
+    for(let j=0;j<8;j+=2){ c.fillRect(18+j,24,1,2); }
+    c.fillStyle = C.metalDark; c.fillRect(8,28,32,6);
+    c.fillStyle = C.red; c.fillRect(18,22,2,2); c.fillRect(30,20,3,3);
+    c.fillStyle = C.bad;
+    for(let j=0;j<6;j++){ c.fillRect(16+j*3,30+j%2*2,1,1); }
+  } else if(ev.title.includes('援助')||ev.title.includes('补给')||ev.title.includes('空投')){
+    c.fillStyle = C.earth; c.fillRect(6,6,20,12);
+    c.fillStyle = C.earthLand; c.fillRect(8,8,8,4); c.fillRect(20,10,4,4);
+    c.fillStyle = C.earthCloud; c.fillRect(10,6,6,2);
+    c.fillStyle = C.metal; c.fillRect(18,22,12,20);
+    c.fillStyle = C.yellow; c.fillRect(20,26,8,4); c.fillRect(24,34,4,4);
+    c.fillStyle = C.red; c.fillRect(16,38,4,2); c.fillRect(28,38,4,2);
+    c.fillStyle = C.green; c.fillRect(8,32,6,4); c.fillRect(36,30,4,6);
+    c.fillStyle = '#fff'; c.fillRect(22,28,2,1); c.fillRect(26,36,2,1);
+  } else if(ev.title.includes('射线')||ev.title.includes('电子')){
+    c.fillStyle = C.glass; c.fillRect(8,16,32,16);
+    c.fillStyle = C.glassLight; c.fillRect(10,18,6,4);
+    c.fillStyle = C.green; c.fillRect(20,20,4,4); c.fillRect(30,20,4,4);
+    c.fillStyle = C.yellow;
+    for(let j=0;j<5;j++){ c.fillRect(10+j*8,10,2,6); }
+    c.fillStyle = C.red; c.fillRect(14,22,2,2); c.fillRect(34,22,2,2);
+    c.fillStyle = '#1a1a28'; c.fillRect(18,14,12,4);
+    c.fillStyle = C.bad; for(let j=0;j<4;j++){ c.fillRect(20+j*4,15,1,2); }
+  } else if(ev.title.includes('丰收')||ev.title.includes('作物')){
+    c.fillStyle = C.greenDark; c.fillRect(8,24,32,12);
+    c.fillStyle = C.green; c.fillRect(10,20,28,6);
+    c.fillStyle = C.yellow; c.fillRect(14,16,6,6); c.fillRect(28,14,6,8);
+    c.fillStyle = '#fff'; c.fillRect(16,17,2,2); c.fillRect(30,15,2,2);
+    c.fillStyle = C.green; for(let j=0;j<5;j++){ c.fillRect(4+j*4,28,2,8); c.fillRect(38-j*4,28,2,8); }
+    c.fillStyle = C.sunCore; c.fillRect(18,8,12,10);
+    c.fillStyle = C.yellow; c.fillRect(22,4,4,6);
+  } else if(ev.title.includes('交流')||ev.title.includes('分享')){
+    c.fillStyle = C.metal; c.fillRect(6,6,20,16);
+    c.fillStyle = C.metalLight; c.fillRect(8,8,16,3);
+    c.fillStyle = C.glassDark; c.fillRect(10,14,12,4);
+    c.fillStyle = C.green; c.fillRect(12,15,2,2); c.fillRect(18,15,2,2);
+    c.fillStyle = C.suit; c.fillRect(20,24,8,14); c.fillRect(32,28,8,10);
+    c.fillStyle = C.visor; c.fillRect(22,26,4,3); c.fillRect(34,30,4,3);
+    c.fillStyle = C.yellow; c.fillRect(28,14,10,6); c.fillRect(30,16,6,2);
+    c.fillStyle = C.good; c.fillRect(30,8,8,4); c.fillRect(32,6,4,2);
+  } else if(ev.title.includes('短缺')||ev.title.includes('延误')||ev.title.includes('中断')){
+    c.fillStyle = C.metalDark; c.fillRect(6,10,36,28);
+    c.fillStyle = C.metal; c.fillRect(8,12,32,4);
+    c.fillStyle = C.red; c.fillRect(12,22,4,4); c.fillRect(22,20,4,6); c.fillRect(32,22,4,4);
+    c.fillStyle = C.bad; c.fillRect(8,30,32,4); c.fillRect(8,34,32,2);
+    for(let j=0;j<6;j++){ c.fillRect(10+j*5,26,2,2); }
+    c.fillStyle = '#1a1a28'; c.fillRect(14,16,20,2);
+  } else if(ev.title.includes('竞赛')||ev.title.includes('大赛')){
+    c.fillStyle = C.glassDark; c.fillRect(6,10,36,24);
+    c.fillStyle = C.glass; c.fillRect(8,12,32,20);
+    c.fillStyle = C.green; c.fillRect(12,16,8,4); c.fillRect(28,16,8,4);
+    c.fillStyle = C.yellow; c.fillRect(18,6,12,6); c.fillRect(20,4,8,4);
+    c.fillStyle = C.sunCore; c.fillRect(22,2,4,4);
+    c.fillStyle = '#fff'; c.fillRect(14,18,2,1); c.fillRect(30,18,2,1);
+    c.fillStyle = C.red; c.fillRect(18,24,4,4); c.fillRect(26,24,4,4); c.fillRect(22,28,4,2);
+  } else if(ev.title.includes('医疗')||ev.title.includes('急病')){
+    c.fillStyle = C.metal; c.fillRect(8,8,32,32);
+    c.fillStyle = C.red; c.fillRect(18,12,12,2); c.fillRect(23,7,2,12);
+    c.fillStyle = C.glassDark; c.fillRect(12,18,24,16);
+    c.fillStyle = C.green; c.fillRect(14,20,4,2); c.fillRect(22,20,6,4);
+    c.fillStyle = C.red; c.fillRect(30,20,4,4); c.fillRect(30,26,4,4);
+    c.fillStyle = C.bad; c.fillRect(14,26,14,4);
+    c.fillStyle = '#1a1a28'; c.fillRect(16,30,10,2);
+    c.fillStyle = '#fff'; c.fillRect(24,22,2,1);
+  } else if(ev.title.includes('预警')||ev.title.includes('规避')){
+    c.fillStyle = C.metal; c.fillRect(8,12,32,12);
+    c.fillStyle = C.glassDark; c.fillRect(12,16,24,4);
+    c.fillStyle = C.green; c.fillRect(14,18,4,2); c.fillRect(22,18,6,2); c.fillRect(30,18,4,2);
+    c.fillStyle = C.crater; c.fillRect(14,4,12,8);
+    c.fillStyle = '#1a1820'; c.fillRect(16,6,8,4);
+    c.fillStyle = C.good; c.fillRect(26,6,8,4);
+    c.fillStyle = '#fff'; c.fillRect(28,6,2,2);
+    c.fillStyle = C.yellow; c.fillRect(18,28,8,8); c.fillRect(20,30,4,4);
+    c.fillStyle = C.green; for(let j=0;j<3;j++){ c.fillRect(6+j*10,28,2,8); c.fillRect(38-j*10,28,2,8); }} else {
+    c.fillStyle = C.yellow;
+    c.fillRect(16,16,16,16);
+    c.fillStyle = '#fff';
+    c.fillRect(20,20,8,8);
+  }
+}
+
+// ---- 音效系统 ----
+const Sound = {
+  actx: null,
+  init(){
+    if(this.actx) return;
+    try{ this.actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+  },
+  beep(freq, dur, type='square', vol=0.08){
+    if(!G.soundOn || !this.actx) return;
+    const t = this.actx.currentTime;
+    const o = this.actx.createOscillator();
+    const g = this.actx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t+dur);
+    o.connect(g); g.connect(this.actx.destination);
+    o.start(t); o.stop(t+dur);
+  },
+  click(){ this.beep(880, 0.04, 'square', 0.05); },
+  build(){ this.beep(440,0.08); setTimeout(()=>this.beep(660,0.12),70); },
+  error(){ this.beep(140, 0.2, 'sawtooth', 0.08); },
+  coin(){ this.beep(988,0.06); setTimeout(()=>this.beep(1319,0.1),50); },
+  day(){ this.beep(523,0.08); setTimeout(()=>this.beep(659,0.08),80); setTimeout(()=>this.beep(784,0.15),160); },
+  alert(){ this.beep(440,0.1,'sawtooth',0.1); setTimeout(()=>this.beep(440,0.1,'sawtooth',0.1),140); },
+  success(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>this.beep(f,0.12),i*70)); },
+  place(){ this.beep(330,0.05); setTimeout(()=>this.beep(550,0.08),40); },
+};
+
+// ---- UI ----
+function updateHUD(){
+  // 资源
+  const rr = document.getElementById('resrow');
+  let html = '';
+  for(let ri=0; ri<RES.length; ri++){
+    const r = RES[ri];
+    const v = Math.floor(G.res[r.key]);
+    const cap = G.cap[r.key] >= 9999 ? '∞' : Math.floor(G.cap[r.key]);
+    const low = v < (typeof cap==='number'?cap*0.1:10);
+    html += '<div class="res"><canvas class="ic" width="10" height="10" data-res="'+ri+'"></canvas><span class="v" style="color:'+(low?'#ff6b6b':'')+'">'+v+'</span><span class="c">/'+cap+'</span></div>';
+  }
+  rr.innerHTML = html;
+  // 绘制资源图标
+  rr.querySelectorAll('[data-res]').forEach(cv=>{
+    const ri = parseInt(cv.dataset.res);
+    drawResIcon(cv.getContext('2d'), RES[ri].key);
+  });
+  // 日期
+  document.getElementById('daytxt').textContent = '第'+G.day+'日';
+  const hour = Math.floor(G.time*24);
+  const min = Math.floor((G.time*24 - hour)*60);
+  document.getElementById('timetxt').textContent = String(hour).padStart(2,'0')+':'+String(min).padStart(2,'0');
+  // 士气
+  const mf = document.getElementById('moralefill');
+  mf.style.width = G.morale+'%';
+  mf.style.background = G.morale>60?C.green : G.morale>30?C.yellow : C.red;
+}
+
+function toast(msg, type){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = type||'';
+  t.classList.add('on');
+  clearTimeout(t._tm);
+  t._tm = setTimeout(()=>t.classList.remove('on'), 1800);
+}
+
+function showOverlay(html){
+  document.getElementById('panel').innerHTML = html;
+  document.getElementById('overlay').classList.add('on');
+}
+function hideOverlay(){
+  document.getElementById('overlay').classList.remove('on');
+}
+
+function showBuildMenu(){
+  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>建造</h2><div class="blist">';
+  for(const key in BDEF){
+    const def = BDEF[key];
+    const unlocked = def.unlock || G.unlocked[def.tech];
+    if(!unlocked) continue;
+    let canAfford = true;
+    for(const k in def.cost) if(G.res[k] < def.cost[k]) canAfford = false;
+    const costStr = Object.entries(def.cost).map(([k,v])=>v+' '+RES.find(r=>r.key===k).name).join(' ');
+    html += '<div class="bcard'+(canAfford?'':' cant')+'" data-build="'+key+'">';
+    html += '<canvas width="32" height="32" data-spr="'+key+'"></canvas>';
+    html += '<div class="info"><div class="nm">'+def.name+'</div>';
+    html += '<div class="cost">'+costStr+'</div>';
+    html += '<div class="desc">'+def.desc+'</div></div></div>';
+  }
+  html += '</div>';
+  showOverlay(html);
+  // 绘制建筑预览
+  document.querySelectorAll('[data-spr]').forEach(cv=>{
+    const key = cv.dataset.spr;
+    const c = cv.getContext('2d');
+    c.imageSmoothingEnabled = false;
+    drawSpriteToCanvas(c, key);
+  });
+  // 绑定
+  document.querySelectorAll('[data-build]').forEach(card=>{
+    card.onclick = ()=>{
+      const key = card.dataset.build;
+      const def = BDEF[key];
+      let can = true;
+      for(const k in def.cost) if(G.res[k] < def.cost[k]) can = false;
+      if(!can){ toast('资源不足！', 'bad'); Sound.error(); return; }
+      G.placeMode = key;
+      hideOverlay();
+      document.getElementById('btn-build').classList.add('on');
+      setInfo('选中：'+def.name+'。点击地图放置，按建造键取消。');
+      Sound.click();
+    };
+  });
+}
+
+function drawSpriteToCanvas(c, type){
+  // 在小canvas上绘制建筑预览
+  c.fillStyle = '#0a0e1a';
+  c.fillRect(0,0,32,32);
+  const oldCtx = ctx;
+  ctx = c;
+  G.preview = true;
+  c.save();
+  c.translate(-4,-4);
+  drawBuilding(type, 0, 0, 0, 1);
+  c.restore();
+  G.preview = false;
+  ctx = oldCtx;
+}
+
+function showResearchMenu(){
+  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>科研中心</h2>';
+  html += '<div style="text-align:center;margin-bottom:8px;font-size:10px;color:var(--c-research)">科研点: <b style="color:var(--text)">'+Math.floor(G.res.research)+'</b></div>';
+  html += '<div class="rlist">';
+  for(const key in RDEF){
+    const r = RDEF[key];
+    const done = G.researchDone[key];
+    const can = G.res.research >= r.cost;
+    let cls = '';
+    if(done) cls = 'done';
+    else if(can) cls = 'afford';
+    html += '<div class="rcard '+cls+'" data-res="'+key+'">';
+    html += '<div class="info"><div class="nm">'+r.name+'</div>';
+    html += '<div class="cost">消耗: '+r.cost+' 科研</div>';
+    html += '<div class="eff">'+r.desc+'</div>';
+    if(done) html += '<div class="st" style="color:var(--good)">✓ 已研发</div>';
+    html += '</div></div>';
+  }
+  html += '</div>';
+  showOverlay(html);
+  document.querySelectorAll('[data-res]').forEach(card=>{
+    card.onclick = ()=>{
+      const key = card.dataset.res;
+      const r = RDEF[key];
+      if(G.researchDone[key]) return;
+      if(G.res.research < r.cost){ toast('科研点不足！', 'bad'); Sound.error(); return; }
+      G.res.research -= r.cost;
+      G.researchDone[key] = true;
+      if(r.unlock) G.unlocked[r.unlock] = true;
+      if(r.boost){
+        if(r.boost.cap) for(const k in G.cap) if(k!=='credit'&&k!=='research') G.cap[k] += r.boost.cap;
+        if(r.boost.habitatCap){
+          for(const b of G.grid) if(b && b.type==='habitat') G.colonistCap += r.boost.habitatCap;
+        }
+      }
+      toast('研发成功：'+r.name, 'good');
+      Sound.success();
+      showResearchMenu();
+    };
+  });
+}
+
+function showCrewMenu(){
+  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>船员管理</h2>';
+  html += '<div style="text-align:center;margin-bottom:8px;font-size:10px;color:var(--dim)">船员: <b style="color:var(--text)">'+G.crew.length+'</b> / <b style="color:var(--text)">'+(G.colonistCap||0)+'</b></div>';
+  // 招募
+  let recruitCost = 50 + G.crew.length*20;
+  if(G.researchDone.recruit) recruitCost = Math.floor(recruitCost * 0.7);
+  const canRecruit = G.res.credit >= recruitCost && G.crew.length < (G.colonistCap||0);
+  html += '<button class="mbtn" id="recruit-btn" '+(canRecruit?'':'disabled')+'>招募新船员 ('+recruitCost+' 金币)</button>';
+  html += '<div class="clist" style="margin-top:8px">';
+  for(const c of G.crew){
+    const job = c.job!=null && G.grid[c.job] ? BDEF[G.grid[c.job].type].name : '空闲';
+    html += '<div class="ccard">';
+    html += '<canvas width="28" height="28" data-crew="'+c.id+'"></canvas>';
+    html += '<div class="info"><div class="nm">'+c.name+'</div>';
+    html += '<div class="stat">采矿<b>'+c.mining+'</b> 务农<b>'+c.farming+'</b> 科研<b>'+c.science+'</b> 工程<b>'+c.eng+'</b></div>';
+    if(c.job!=null){
+      html += '<div class="asg">职业: '+job+' <button class="mbtn" style="display:inline;width:auto;padding:2px 6px;font-size:9px;margin-top:0" data-unassign="'+c.id+'">取消分配</button></div>';
+    } else {
+      html += '<div class="asg">职业: '+job+'</div>';
+    }
+    html += '</div></div>';
+  }
+  html += '</div>';
+  showOverlay(html);
+  // 绘制头像
+  document.querySelectorAll('[data-crew]').forEach(cv=>{
+    const c = cv.getContext('2d');
+    c.imageSmoothingEnabled = false;
+    c.fillStyle = '#0a0e1a';
+    c.fillRect(0,0,28,28);
+    const oldCtx = ctx;
+    ctx = c;
+    G.preview = true;
+    drawAstronaut(8, 4, 0, 'happy');
+    G.preview = false;
+    ctx = oldCtx;
+  });
+  document.getElementById('recruit-btn').onclick = ()=>{
+    if(G.res.credit < recruitCost) return;
+    if(G.crew.length >= (G.colonistCap||0)){ toast('居住舱不足！', 'bad'); Sound.error(); return; }
+    G.res.credit -= recruitCost;
+    const names = ['伽马','德尔塔','艾普西龙','泽塔','伊塔','西塔','艾欧塔','卡帕','拉姆','缪'];
+    const n = names[Math.floor(Math.random()*names.length)];
+    const stats = {mining:1+Math.floor(Math.random()*4), farming:1+Math.floor(Math.random()*4), science:1+Math.floor(Math.random()*4), eng:1+Math.floor(Math.random()*4)};
+    addCrew(n+' '+Math.floor(Math.random()*100), stats);
+    G.stats.totalRecruited++;
+    toast('新船员加入！', 'good');
+    Sound.success();
+    showCrewMenu();
+  };
+  // 取消分配按钮
+  document.querySelectorAll('[data-unassign]').forEach(btn=>{
+    btn.onclick = ()=>{
+      const cid = parseInt(btn.dataset.unassign);
+      const c = G.crew.find(x=>x.id===cid);
+      if(c && c.job!=null){
+        const b = G.grid[c.job];
+        if(b){
+          const idx = b.crew.indexOf(cid);
+          if(idx>=0) b.crew.splice(idx,1);
+        }
+        c.job = null;
+        toast(c.name+' 已取消分配', 'good');
+        Sound.click();
+        showCrewMenu();
+      }
+    };
+  });
+}
+
+function showExpiryWarning(loss){
+  const box = document.getElementById('evbox');
+  box.innerHTML = '<h3 style="color:var(--bad)">⚠ 积分过期警告</h3><canvas id="evcanvas" width="48" height="48"></canvas><p>你的积分已开始过期！<br>今日损失了 <b>'+loss+'</b> 积分。<br>研发<b>积分保护</b>科技可阻止积分过期。</p><button class="evbtn" id="ev-ok">了解</button>';
+  document.getElementById('eventpop').classList.add('on');
+  const ec = document.getElementById('evcanvas');
+  if(ec){
+    const ectx = ec.getContext('2d');
+    ectx.imageSmoothingEnabled = false;
+    ectx.fillStyle = '#0a0e1a'; ectx.fillRect(0,0,48,48);
+    ectx.fillStyle = C.yellowDark; ectx.fillRect(10,10,28,28);
+    ectx.fillStyle = C.yellow; ectx.fillRect(12,12,24,24);
+    ectx.fillStyle = C.sunCore; ectx.fillRect(16,16,16,16);
+    ectx.fillStyle = '#0a0e1a'; ectx.fillRect(20,14,2,20);
+    ectx.fillStyle = C.red; ectx.fillRect(22,10,4,28);
+    ectx.fillStyle = C.red; ectx.fillRect(26,14,4,20);
+  }
+  document.getElementById('ev-ok').onclick = ()=>{
+    document.getElementById('eventpop').classList.remove('on');
+    G.paused = false;
+  };
+  Sound.alert();
+}
+
+function showMenu(){
+  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>菜单</h2>';
+  html += '<div class="mlist">';
+  html += '<div class="mitem"><div class="t">游戏状态</div><div class="d">第 <b>'+G.day+'</b> 日 · 船员 <b>'+G.crew.length+'</b> 人 · 建筑 <b>'+countBuildings()+'</b> 座 · 科技 <b>'+Object.keys(G.researchDone).length+'</b> 项 · 成就 <b>'+G.achievements.size+'</b> 个 · 事件 <b>'+G.stats.totalEvents+'</b> 次 · 招募 <b>'+G.stats.totalRecruited+'</b> 人</div></div>';
+  // 产量统计
+  html += '<div class="mitem"><div class="t">资源动态</div><div class="d" id="res-stats">计算中...</div></div>';
+  html += '<div class="mitem"><div class="t">音效</div><div class="d">当前: '+(G.soundOn?'开启':'关闭')+'</div><button class="mbtn" id="sound-toggle">'+(G.soundOn?'关闭音效':'开启音效')+'</button></div>';
+  html += '<div class="mitem"><div class="t">存档</div><div class="d">保存进度到本地</div><button class="mbtn" id="save-btn">保存游戏</button><button class="mbtn" id="load-btn">读取存档</button></div>';
+  html += '<div class="mitem"><div class="t">成就 ('+G.achievements.size+'/8)</div><div class="d">';
+  const achs = [
+    ['crew5','小队成立','5名船员'],
+    ['crew10','殖民地','10名船员'],
+    ['crew20','月球都市','20名船员'],
+    ['day10','十日生存','第10天'],
+    ['day30','月球老兵','第30天'],
+    ['day50','月球传奇','第50天'],
+    ['tech3','科研先锋','3项科技'],
+    ['tech7','科技大师','7项科技'],
+    ['tech12','科学家','12项科技'],
+    ['rich','富甲月球','500金币'],
+    ['rich2','月球大亨','1500金币'],
+    ['core','核心启动','建造月球核心'],
+    ['build20','繁荣殖民地','20座建筑'],
+    ['medbay','医疗保障','建造医务室'],
+    ['radar','安全第一','建造雷达站'],
+  ];
+  for(const [id,name,desc] of achs){
+    html += (G.achievements.has(id)?'✓':'○')+' '+name+' ('+desc+')<br>';
+  }
+  html += '</div></div>';
+  html += '<div class="mitem"><div class="t">重新开始</div><div class="d">清除当前进度，重新开始游戏</div><button class="mbtn danger" id="reset-btn">重新开始</button></div>';
+  html += '</div>';
+  showOverlay(html);
+  // 计算资源动态
+  const useMult = G.researchDone.energy2 ? 0.8 : 1;
+  const rates = {energy:0,oxygen:0,mineral:0,food:0,credit:0,research:0};
+  const day = isDay();
+  for(let i=0;i<G.grid.length;i++){
+    const b = G.grid[i]; if(!b) continue;
+    const def = BDEF[b.type];
+    if(def.prod){
+      let mult = 0.5 + G.morale/100;
+      if(def.needCrew && b.crew.length===0) continue;
+      if(def.needCrew) mult *= 1 + b.crew.length*0.3;
+      if(G.researchDone.solar2 && b.type==='solar') mult *= 1.5;
+      if(G.researchDone.mine2 && b.type==='mine') mult *= 1.5;
+      if(G.researchDone.farm2 && b.type==='greenhouse') mult *= 1.5;
+      if(G.researchDone.lab2 && b.type==='lab') mult *= 1.8;
+      // 地表改造全产能加成
+      if(G.researchDone.terraform) mult *= 1.2;
+      // 机器人车间加成
+      if(G.researchDone.robot2 && b.type==='droidbay') mult *= 2;
+      if(b.type==='tradepost'){ rates.credit += 0.3 * (G.researchDone.trade2?1.5:1); }
+      for(const k in def.prod){
+        if(def.dayOnly && !day) continue;
+        rates[k] += def.prod[k] * mult;
+      }
+    }
+    if(def.use){
+      for(const k in def.use) rates[k] -= def.use[k] * useMult;
+    }
+  }
+  rates.oxygen -= G.crew.length * 0.15;
+  rates.food -= G.crew.length * 0.12;
+  let rateHtml = '';
+  for(const r of RES){
+    const v = rates[r.key];
+    const sign = v >= 0 ? '+' : '';
+    const color = v >= 0 ? 'var(--good)' : 'var(--bad)';
+    rateHtml += r.name+': <b style="color:'+color+'">'+sign+v.toFixed(1)+'/s</b> · 当前: <b>'+Math.floor(G.res[r.key])+'</b><br>';
+  }
+  document.getElementById('res-stats').innerHTML = rateHtml;
+  document.getElementById('sound-toggle').onclick = ()=>{
+    G.soundOn = !G.soundOn;
+    if(G.soundOn) Sound.init();
+    showMenu();
+  };
+  document.getElementById('save-btn').onclick = ()=>{
+    saveGame();
+    toast('已保存', 'good');
+  };
+  document.getElementById('load-btn').onclick = ()=>{
+    if(loadGame()){ toast('已读取', 'good'); hideOverlay(); }
+    else toast('无存档', 'bad');
+  };
+  document.getElementById('reset-btn').onclick = ()=>{
+    // 用自定义确认代替 confirm()
+    const btn = document.getElementById('reset-btn');
+    if(btn.dataset.confirmed === '1'){
+      localStorage.removeItem('lunarColony');
+      newGame();
+      hideOverlay();
+      toast('新游戏开始', 'good');
+    } else {
+      btn.dataset.confirmed = '1';
+      btn.textContent = '再次点击确认重置';
+      btn.style.background = 'var(--bad)';
+      btn.style.color = '#fff';
+      setTimeout(()=>{
+        btn.dataset.confirmed = '0';
+        btn.textContent = '重新开始';
+        btn.style.background = '';
+        btn.style.color = '';
+      }, 3000);
+    }
+  };
+}
+
+function countBuildings(){
+  let n=0; for(const b of G.grid) if(b) n++; return n;
+}
+
+function setInfo(text){
+  document.getElementById('infobar').innerHTML = text;
+}
+
+// ---- 选中建筑信息 ----
+function showSelInfo(idx){
+  const b = G.grid[idx];
+  if(!b){ document.getElementById('selinfo').classList.remove('on'); return; }
+  const def = BDEF[b.type];
+  let html = '<div class="sn">'+def.name+'</div>';
+  html += '<div class="sd">';
+  if(def.prod){
+    for(const k in def.prod){
+      html += '产 '+def.prod[k].toFixed(1)+'/秒 '+RES.find(r=>r.key===k).name+' ';
+    }
+  }
+  if(def.use){
+    for(const k in def.use){
+      html += '耗 '+def.use[k].toFixed(2)+'/秒 '+RES.find(r=>r.key===k).name+' ';
+    }
+  }
+  if(def.needCrew){
+    html += '<br>分配船员: '+b.crew.length+' (需至少1人)';
+    if(b.crew.length > 0){
+      html += ' <button class="mbtn" style="display:inline;width:auto;padding:2px 6px;font-size:9px;margin-top:0" data-unassign-all="'+idx+'">全部撤回</button>';
+    }
+  }
+  if(def.cap && def.cap.colonist) html += '<br>提供居住: +'+def.cap.colonist;
+  html += '</div>';
+  if(def.needCrew){
+    html += '<div class="act"><button class="asg" data-idx="'+idx+'">分配船员</button><button class="del" data-del="'+idx+'">拆除</button></div>';
+  } else if(b.type==='tradepost'){
+    html += '<div class="act"><button class="asg" data-trade-open="'+idx+'" style="background:linear-gradient(180deg,#5a4015,#3a2810);border-color:var(--accent);color:var(--accent)">贸易</button><button class="del" data-del="'+idx+'">拆除</button></div>';
+  } else {
+    html += '<div class="act"><button class="del" data-del="'+idx+'">拆除</button></div>';
+  }
+  const el = document.getElementById('selinfo');
+  el.innerHTML = html;
+  el.classList.add('on');
+  const asgBtn = el.querySelector('[data-idx]');
+  if(asgBtn) asgBtn.onclick = ()=>assignCrew(idx);
+  const delBtn = el.querySelector('[data-del]');
+  if(delBtn) delBtn.onclick = ()=>demolish(idx);
+  const tradeOpenBtn = el.querySelector('[data-trade-open]');
+  if(tradeOpenBtn) tradeOpenBtn.onclick = ()=>showTradeMenu();
+  const unassignAllBtn = el.querySelector('[data-unassign-all]');
+  if(unassignAllBtn) unassignAllBtn.onclick = ()=>{
+    for(const cid of b.crew){
+      const c = G.crew.find(x=>x.id===cid);
+      if(c) c.job = null;
+    }
+    b.crew = [];
+    toast('已撤回全部船员', 'good');
+    Sound.click();
+    showSelInfo(idx);
+  };
+}
+
+function assignCrew(idx){
+  const b = G.grid[idx];
+  if(!b) return;
+  // 找一个空闲船员
+  const free = G.crew.filter(c=>c.job==null);
+  if(free.length===0){ toast('没有空闲船员！', 'bad'); Sound.error(); return; }
+  const c = free[0];
+  c.job = idx;
+  b.crew.push(c.id);
+  toast(c.name+' 已分配', 'good');
+  Sound.click();
+  showSelInfo(idx);
+}
+
+function demolish(idx){
+  const b = G.grid[idx];
+  if(!b) return;
+  // 释放船员
+  for(const cid of b.crew){
+    const c = G.crew.find(x=>x.id===cid);
+    if(c) c.job = null;
+  }
+  const def = BDEF[b.type];
+  if(def.cap && def.cap.colonist){
+    G.colonistCap -= def.cap.colonist;
+    // 如果船员数超过上限，移除多余的
+    while(G.crew.length > G.colonistCap && G.crew.length > 0){
+      const removed = G.crew.pop();
+      toast(removed.name+' 因居住舱不足离开了殖民地', 'bad');
+    }
+  }
+  if(def.capAdd){ for(const k in def.capAdd) G.cap[k] -= def.capAdd[k]; }
+  // 返还一半资源
+  if(def.cost){
+    for(const k in def.cost) G.res[k] = Math.min(G.cap[k], G.res[k] + Math.floor(def.cost[k]/2));
+  }
+  G.grid[idx] = null;
+  G.selected = null;
+  document.getElementById('selinfo').classList.remove('on');
+  spawnParticles((b.gx-G.scrollX)*TILE+TILE/2, (b.gy-G.scrollY)*TILE+TILE/2, 'build');
+  Sound.error();
+  toast('已拆除（返还50%资源）', 'good');
+}
+
+// ---- 存档 ----
+function saveGame(){
+  try{
+    const data = JSON.parse(JSON.stringify(G));
+    data.achievements = Array.from(G.achievements);
+    data.terrain = terrain;
+    localStorage.setItem('lunarColony', JSON.stringify(data));
+  }catch(e){}
+}
+function loadGame(){
+  try{
+    const s = localStorage.getItem('lunarColony');
+    if(!s) return false;
+    const data = JSON.parse(s);
+    data.achievements = new Set(data.achievements||[]);
+    if(data.terrain) terrain = data.terrain;
+    G = data;
+    return true;
+  }catch(e){ return false; }
+}
+
+// ---- Game Over ----
+function showGameOver(){
+  G.gameOver = true;
+  G.paused = true;
+  const box = document.getElementById('evbox');
+  box.innerHTML = '<h3 style="color:var(--bad)">★ 殖民地覆灭 ★</h3><canvas id="evcanvas" width="48" height="48"></canvas><p>资源耗尽，士气崩溃。<br>殖民地存活了 <b>'+G.day+'</b> 天。<br>船员：<b>'+G.crew.length+'</b>人 · 建筑：<b>'+countBuildings()+'</b>座 · 科技：<b>'+Object.keys(G.researchDone).length+'</b>项</p><button class="evbtn" id="ev-ok" style="background:var(--bad)">重新开始</button>';
+  document.getElementById('eventpop').classList.add('on');
+  const ec = document.getElementById('evcanvas');
+  if(ec){
+    const ectx = ec.getContext('2d');
+    ectx.imageSmoothingEnabled = false;
+    ectx.fillStyle = '#0a0e1a'; ectx.fillRect(0,0,48,48);
+    ectx.fillStyle = C.redDark; ectx.fillRect(14,14,20,20);
+    ectx.fillStyle = C.red; ectx.fillRect(18,18,12,12);
+    ectx.fillStyle = '#1a0a0a'; ectx.fillRect(22,22,4,4);
+  }
+  document.getElementById('ev-ok').onclick = ()=>{
+    document.getElementById('eventpop').classList.remove('on');
+    localStorage.removeItem('lunarColony');
+    newGame();
+    hideOverlay();
+    setInfo('新游戏开始。点击 <b>建造</b> 开始建设。');
+  };
+  Sound.alert();
+}
+
+// ---- 胜利 ----
+function showWin(){
+  G.paused = true;
+  const box = document.getElementById('evbox');
+  box.innerHTML = '<h3>★ 胜利！★</h3><canvas id="evcanvas" width="48" height="48"></canvas><p>恭喜！你成功建造了月球核心，并拥有20名船员。<br>月球殖民地正式成为月球都市！<br>用时：'+G.day+'天</p><button class="evbtn" id="ev-ok">继续游戏</button>';
+  document.getElementById('eventpop').classList.add('on');
+  const ec = document.getElementById('evcanvas');
+  if(ec){
+    const ectx = ec.getContext('2d');
+    ectx.imageSmoothingEnabled = false;
+    ectx.fillStyle = '#0a0e1a';
+    ectx.fillRect(0,0,48,48);
+    ectx.fillStyle = C.yellow;
+    ectx.fillRect(14,14,20,20);
+    ectx.fillStyle = C.sunCore;
+    ectx.fillRect(18,18,12,12);
+    ectx.fillStyle = '#fff';
+    ectx.fillRect(22,22,4,4);
+  }
+  document.getElementById('ev-ok').onclick = ()=>{
+    document.getElementById('eventpop').classList.remove('on');
+    G.paused = false;
+  };
+  Sound.success();
+}
+
+// ---- 输入处理 ----
+let touchStart = null, touchLast = null, isDragging = false, dragMoved = false;
+
+function getEventPos(e){
+  const r = canvas.getBoundingClientRect();
+  const t = e.touches ? e.touches[0] : e;
+  // 将CSS坐标映射到游戏内部坐标
+  const gx = (t.clientX - r.left) * (canvasW / r.width);
+  const gy = (t.clientY - r.top) * (canvasH / r.height);
+  return {x: gx, y: gy};
+}
+
+function screenToGrid(px, py){
+  return {x: Math.floor(px / TILE + G.scrollX), y: Math.floor(py / TILE + G.scrollY)};
+}
+
+canvas.addEventListener('touchstart', (e)=>{
+  e.preventDefault();
+  const p = getEventPos(e);
+  touchStart = {...p};
+  touchLast = {...p};
+  isDragging = false;
+  dragMoved = false;
+}, {passive:false});
+
+canvas.addEventListener('touchmove', (e)=>{
+  e.preventDefault();
+  if(!touchLast) return;
+  const p = getEventPos(e);
+  const dx = p.x - touchLast.x;
+  const dy = p.y - touchLast.y;
+  if(Math.abs(p.x-touchStart.x)>5 || Math.abs(p.y-touchStart.y)>5) dragMoved = true;
+  G.scrollX -= dx / TILE;
+  G.scrollY -= dy / TILE;
+  clampScroll();
+  touchLast = p;
+  // 更新hover
+  if(G.placeMode){
+    G.hover = screenToGrid(p.x, p.y);
+  }
+}, {passive:false});
+
+canvas.addEventListener('touchend', (e)=>{
+  e.preventDefault();
+  if(!dragMoved){
+    // 点击
+    const p = touchStart;
+    const g = screenToGrid(p.x, p.y);
+    onTap(g);
+  }
+  touchStart = null;
+  touchLast = null;
+}, {passive:false});
+
+// 鼠标支持（桌面测试）
+canvas.addEventListener('mousedown', (e)=>{
+  const p = getEventPos(e);
+  touchStart = {...p};
+  touchLast = {...p};
+  isDragging = false;
+  dragMoved = false;
+});
+canvas.addEventListener('mousemove', (e)=>{
+  if(!touchLast) return;
+  const p = getEventPos(e);
+  const dx = p.x - touchLast.x;
+  const dy = p.y - touchLast.y;
+  if(Math.abs(p.x-touchStart.x)>5 || Math.abs(p.y-touchStart.y)>5) dragMoved = true;
+  G.scrollX -= dx / TILE;
+  G.scrollY -= dy / TILE;
+  clampScroll();
+  touchLast = p;
+  if(G.placeMode){
+    G.hover = screenToGrid(p.x, p.y);
+  }
+});
+canvas.addEventListener('mouseup', (e)=>{
+  if(!touchStart) return;
+  if(!dragMoved){
+    const g = screenToGrid(touchStart.x, touchStart.y);
+    onTap(g);
+  }
+  touchStart = null;
+  touchLast = null;
+});
+canvas.addEventListener('mouseleave', ()=>{ touchStart=null; touchLast=null; });
+
+function clampScroll(){
+  G.scrollX = Math.max(0, Math.min(GRID_W - VIEW_W, G.scrollX));
+  G.scrollY = Math.max(0, Math.min(GRID_H - VIEW_H, G.scrollY));
+}
+
+function onTap(g){
+  if(g.x<0||g.x>=GRID_W||g.y<0||g.y>=GRID_H) return;
+  const idx = g.y*GRID_W + g.x;
+  if(G.placeMode){
+    // 建造模式
+    if(canPlace(g.x, g.y)){
+      placeBuilding(G.placeMode, g.x, g.y, false);
+      Sound.place();
+      // 保持建造模式，可连续建造
+      const def = BDEF[G.placeMode];
+      let can = true;
+      for(const k in def.cost) if(G.res[k] < def.cost[k]) can = false;
+      if(!can){
+        G.placeMode = null;
+        document.getElementById('btn-build').classList.remove('on');
+        setInfo('资源不足，已退出建造模式。');
+      } else {
+        setInfo('继续点击放置 '+def.name+'，或按建造键退出。');
+      }
+    } else {
+      toast('无法放置在此处', 'bad');
+      Sound.error();
+    }
+  } else {
+    // 选中建筑
+    if(G.grid[idx]){
+      G.selected = idx;
+      showSelInfo(idx);
+      Sound.click();
+    } else {
+      G.selected = null;
+      document.getElementById('selinfo').classList.remove('on');
+    }
+  }
+}
+
+// ---- 按钮绑定 ----
+document.getElementById('btn-build').onclick = ()=>{
+  Sound.init();
+  if(G.placeMode){
+    G.placeMode = null;
+    document.getElementById('btn-build').classList.remove('on');
+    setInfo('已取消建造模式。');
+  } else {
+    showBuildMenu();
+  }
+};
+document.getElementById('btn-research').onclick = ()=>{ Sound.init(); showResearchMenu(); };
+document.getElementById('btn-crew').onclick = ()=>{ Sound.init(); showCrewMenu(); };
+document.getElementById('btn-menu').onclick = ()=>{ Sound.init(); showMenu(); };
+
+document.querySelectorAll('.spd').forEach(btn=>{
+  btn.onclick = ()=>{
+    G.speed = parseInt(btn.dataset.spd);
+    G.paused = G.speed === 0;
+    document.querySelectorAll('.spd').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    Sound.click();
+  };
+});
+
+document.getElementById('overlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'overlay') hideOverlay();
+});
+
+// ---- 标题画面 ----
+function drawTitle(){
+  const tc = document.getElementById('title-canvas');
+  const c = tc.getContext('2d');
+  c.imageSmoothingEnabled = false;
+  c.fillStyle = '#0a0e1a';
+  c.fillRect(0,0,72,72);
+  // 月球地表
+  c.fillStyle = C.regolith2;
+  c.fillRect(0,40,72,32);
+  c.fillStyle = C.regolith3;
+  c.fillRect(0,50,72,22);
+  // 陨石坑
+  c.fillStyle = C.crater;
+  c.fillRect(10,55,16,10);
+  c.fillStyle = '#1a1820';
+  c.fillRect(12,57,12,6);
+  c.fillStyle = C.crater;
+  c.fillRect(48,60,14,8);
+  c.fillStyle = '#1a1820';
+  c.fillRect(50,62,10,4);
+  // 居住舱
+  c.fillStyle = C.white;
+  c.fillRect(28,30,16,14);
+  c.fillStyle = C.glassDark;
+  c.fillRect(32,36,8,4);
+  c.fillStyle = C.metalDark;
+  c.fillRect(34,40,4,4);
+  // 天线
+  c.fillStyle = C.metal;
+  c.fillRect(35,22,2,8);
+  c.fillStyle = C.red;
+  c.fillRect(33,22,6,2);
+  // 地球
+  c.fillStyle = C.earth;
+  c.fillRect(50,8,12,12);
+  c.fillStyle = C.earthLand;
+  c.fillRect(52,10,4,3);
+  c.fillRect(56,14,4,3);
+  // 星星
+  c.fillStyle = C.star;
+  c.fillRect(10,6,1,1);
+  c.fillRect(20,12,1,1);
+  c.fillRect(30,4,1,1);
+  c.fillRect(40,10,1,1);
+  c.fillRect(66,20,1,1);
+  c.fillRect(5,18,1,1);
+  c.fillRect(15,24,1,1);
+}
+
+document.getElementById('start-btn').onclick = ()=>{
+  Sound.init();
+  document.getElementById('title').style.display = 'none';
+  newGame();
+  resizeCanvas();
+  setInfo('先建 <b>太阳能板</b> 和 <b>制氧机</b> 维持生存。建 <b>矿场</b>、<b>温室</b>、<b>实验室</b> 发展。<b>通讯塔</b> 触发事件后研发解锁更多建筑！');
+};
+
+// ---- 主循环 ----
+let lastT = 0;
+function loop(t){
+  const dt = Math.min(0.1, (t - lastT)/1000);
+  lastT = t;
+  if(G){
+    update(dt);
+    render();
+    updateHUD();
+  }
+  requestAnimationFrame(loop);
+}
+
+// 初始化
+newGame();
+resizeCanvas();
+drawTitle();
+requestAnimationFrame(loop);
+
+// 防止页面滚动
+document.body.addEventListener('touchmove', (e)=>e.preventDefault(), {passive:false});
+document.addEventListener('gesturestart', (e)=>e.preventDefault());
+
+</script>
+</body>
+</html>

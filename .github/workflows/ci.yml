@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  push:
+    branches: [main, 'feat/**', 'fix/**']
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate HTML & Size Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Check index.html exists
+        run: |
+          if [ ! -f index.html ]; then
+            echo "❌ index.html not found"
+            exit 1
+          fi
+          echo "✅ index.html found"
+
+      - name: HTML basic validation
+        run: |
+          node -e "
+          const fs = require('fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const errors = [];
+          if (!html.includes('<!DOCTYPE html>')) errors.push('Missing <!DOCTYPE html>');
+          if (!html.includes('<html')) errors.push('Missing <html> tag');
+          if (!html.includes('</html>')) errors.push('Missing </html> closing tag');
+          if (!html.includes('<head>')) errors.push('Missing <head> tag');
+          if (!html.includes('</head>')) errors.push('Missing </head> closing tag');
+          if (!html.includes('<body>')) errors.push('Missing <body> tag');
+          if (!html.includes('</body>')) errors.push('Missing </body> closing tag');
+          const scriptOpen = (html.match(/<script>/g) || []).length;
+          const scriptClose = (html.match(/<\/script>/g) || []).length;
+          if (scriptOpen !== scriptClose) errors.push('Unbalanced <script> tags: ' + scriptOpen + ' open, ' + scriptClose + ' close');
+          const styleOpen = (html.match(/<style>/g) || []).length;
+          const styleClose = (html.match(/<\/style>/g) || []).length;
+          if (styleOpen !== styleClose) errors.push('Unbalanced <style> tags');
+          if (errors.length > 0) {
+            console.error('❌ HTML validation failed:');
+            errors.forEach(e => console.error('  - ' + e));
+            process.exit(1);
+          }
+          console.log('✅ HTML structure OK');
+          console.log('  <script> tags:', scriptOpen);
+          console.log('  <style> tags:', styleOpen);
+          "
+
+      - name: Check single-file independence
+        run: |
+          node -e "
+          const fs = require('fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const externalRefs = [];
+          const srcMatches = html.match(/src\s*=\s*['\"](?!data:|blob:|#)[^'\"]+['\"]/g) || [];
+          const hrefMatches = html.match(/href\s*=\s*['\"](?!data:|blob:|#|mailto:|tel:)[^'\"]+['\"]/g) || [];
+          srcMatches.forEach(m => {
+            const url = m.match(/['\"]([^'\"]+)['\"]/)[1];
+            if (!url.startsWith('http') && !url.startsWith('//')) {
+              externalRefs.push('src: ' + url);
+            }
+          });
+          hrefMatches.forEach(m => {
+            const url = m.match(/['\"]([^'\"]+)['\"]/)[1];
+            if (!url.startsWith('http') && !url.startsWith('//')) {
+              externalRefs.push('href: ' + url);
+            }
+          });
+          if (externalRefs.length > 0) {
+            console.error('❌ External file references found (breaks single-file principle):');
+            externalRefs.forEach(r => console.error('  - ' + r));
+            process.exit(1);
+          }
+          console.log('✅ No external file dependencies');
+          "
+
+      - name: File size check
+        run: |
+          SIZE=$(stat -c%s index.html)
+          echo "index.html size: $SIZE bytes"
+          if [ $SIZE -gt 524288 ]; then
+            echo "⚠️ Warning: index.html exceeds 512KB (current: $((SIZE/1024))KB)"
+            echo "Consider optimizing assets or splitting content"
+          fi
+          if [ $SIZE -lt 1024 ]; then
+            echo "❌ index.html too small (<1KB), likely broken"
+            exit 1
+          fi
+          echo "✅ File size OK"
+
+      - name: Check LICENSE exists
+        run: |
+          if [ ! -f LICENSE ]; then
+            echo "❌ LICENSE not found"
+            exit 1
+          fi
+          echo "✅ LICENSE found"
+
+      - name: Check README exists
+        run: |
+          if [ ! -f README.md ]; then
+            echo "❌ README.md not found"
+            exit 1
+          fi
+          echo "✅ README.md found"
+
+      - name: Summary
+        run: |
+          echo "## CI Summary" >> $GITHUB_STEP_SUMMARY
+          echo "✅ All checks passed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- HTML structure validated" >> $GITHUB_STEP_SUMMARY
+          echo "- Single-file independence verified" >> $GITHUB_STEP_SUMMARY
+          echo "- File size: $(stat -c%s index.html) bytes" >> $GITHUB_STEP_SUMMARY
+          echo "- LICENSE & README present" >> $GITHUB_STEP_SUMMARY

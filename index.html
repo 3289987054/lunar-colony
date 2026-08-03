@@ -130,7 +130,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060b14;font-family:
     <div id="resrow"></div>
     <div id="datebar">
       <span><span class="day" id="daytxt">第1日</span> · <span id="timetxt">06:00</span></span>
-      <div id="moralebar"><span>士气</span><div class="ml"><div class="mf" id="moralefill" style="width:70%"></div></div></div>
+      <div id="moralebar"><span id="morale-label">士气</span><div class="ml"><div class="mf" id="moralefill" style="width:70%"></div></div></div>
     </div>
   </div>
   <div id="game-wrap">
@@ -140,13 +140,13 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060b14;font-family:
   <div id="bottombar">
     <div id="infobar">欢迎来到月球！点击 <b>建造</b> 开始你的殖民地。目标：建造 <b>月球核心</b> 并拥有 20 名船员。注意：第15天起积分将开始过期！</div>
     <div id="btnrow">
-      <button class="btn accent" id="btn-build"><span class="ic">⛏</span>建造</button>
-      <button class="btn" id="btn-research"><span class="ic">🔬</span>科研</button>
-      <button class="btn" id="btn-crew"><span class="ic">👤</span>船员</button>
-      <button class="btn" id="btn-menu"><span class="ic">≡</span>菜单</button>
+      <button class="btn accent" id="btn-build"><span class="ic">⛏</span><span class="btn-label">建造</span></button>
+      <button class="btn" id="btn-research"><span class="ic">🔬</span><span class="btn-label">科研</span></button>
+      <button class="btn" id="btn-crew"><span class="ic">👤</span><span class="btn-label">船员</span></button>
+      <button class="btn" id="btn-menu"><span class="ic">≡</span><span class="btn-label">菜单</span></button>
     </div>
     <div id="speedrow">
-      <button class="spd" data-spd="0">‖ 暂停</button>
+      <button class="spd" data-spd="0" id="spd-pause"><span id="pause-label">‖ 暂停</span></button>
       <button class="spd on" data-spd="1">▶ 1x</button>
       <button class="spd" data-spd="3">▶▶ 3x</button>
       <button class="spd" data-spd="5">▶▶▶ 5x</button>
@@ -158,15 +158,210 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060b14;font-family:
 <div id="toast"></div>
 <div id="title">
   <canvas id="title-canvas" width="72" height="72"></canvas>
-  <h1>月球基地</h1>
+  <h1 id="title-h1">月球基地</h1>
   <h2>LUNAR COLONY</h2>
-  <button class="start" id="start-btn">开始建造</button>
-  <div class="tip">在荒芜的月球上建立繁荣殖民地<br>管理 <b>7种资源</b> · 招募 <b>船员</b> · 研发 <b>24项科技</b><br>建造 <b>17种建筑</b> · 应对 <b>23种事件</b> · 建造 <b>月球核心</b> 达成胜利</div>
+  <button class="start" id="start-btn"><span class="btn-label">开始建造</span></button>
+  <div id="lang-switch" style="margin-top:14px;display:flex;gap:6px;justify-content:center">
+    <button class="lang-btn" data-lang="zh" style="background:#1a2030;color:#dae2f0;border:1px solid #26324a;padding:5px 14px;font-family:monospace;font-size:10px;cursor:pointer;border-radius:1px">中文</button>
+    <button class="lang-btn" data-lang="en" style="background:#1a2030;color:#dae2f0;border:1px solid #26324a;padding:5px 14px;font-family:monospace;font-size:10px;cursor:pointer;border-radius:1px">English</button>
+  </div>
+  <div class="tip" id="title-tip">在荒芜的月球上建立繁荣殖民地<br>管理 <b>7种资源</b> · 招募 <b>船员</b> · 研发 <b>24项科技</b><br>建造 <b>17种建筑</b> · 应对 <b>23种事件</b> · 建造 <b>月球核心</b> 达成胜利</div>
 </div>
 <script>
 'use strict';
 // ============ 月球基地 LUNAR COLONY ============
 // 开罗风格像素模拟游戏
+// ============ 国际化 i18n ============
+const I18N = {
+  lang: localStorage.getItem('lunarColonyLang') || 'zh',
+  en: {
+    '月球基地': 'LUNAR COLONY', '开始建造': 'START BUILDING',
+    '在荒芜的月球上建立繁荣殖民地': 'Build a thriving colony on the Moon',
+    '管理': 'Manage', '招募': 'Recruit', '研发': 'Research', '建造': 'Build',
+    '种资源': ' resources', '名船员': ' crew', '项科技': ' techs',
+    '种建筑': ' buildings', '种事件': ' events',
+    '并拥有 20 名船员': 'and reach 20 crew',
+    '目标：建造': 'Goal: Build', '并拥有 20 名船员。': 'and reach 20 crew.',
+    '注意：第15天起积分将开始过期！': 'Warning: points expire from Day 15!',
+    '欢迎来到月球！点击': 'Welcome! Tap', '开始你的殖民地': 'to start your colony',
+    '达成胜利': 'to win', '应对': 'Face',
+    '科研': 'RESEARCH', '船员': 'CREW', '菜单': 'MENU', '士气': 'Morale',
+    '‖ 暂停': '‖ Pause',
+    '能量': 'Energy', '氧气': 'Oxygen', '矿物': 'Mineral', '食物': 'Food',
+    '金币': 'Credits', '科研点': 'Research', '过期积分': 'Expired',
+    '居住舱': 'Habitat', '容纳+2船员': '+2 crew',
+    '太阳能板': 'Solar Panel', '白天产能量': 'Energy (day)',
+    '同位素发电机': 'RTG', '全天产能量': 'Energy (24/7)',
+    '制氧机': 'O2 Gen', '产氧气': 'Makes O2',
+    '采矿场': 'Mine', '产矿物 需船员': 'Mineral, needs crew',
+    '温室': 'Farm', '产食物 需船员': 'Food, needs crew',
+    '实验室': 'Lab', '产科研 需船员': 'Research, needs crew',
+    '仓库': 'Storage', '提升存储上限': 'Raises caps',
+    '通讯塔': 'Comm', '解锁事件与贸易': 'Events & trade',
+    '娱乐室': 'Rec', '提升士气': 'Boosts morale',
+    '月球核心': 'Core', '胜利建筑！': 'Win building!',
+    '贸易站': 'Trade', '用金币换取资源': 'Buy resources',
+    '医务室': 'Medbay', '治疗船员 降低死亡风险': 'Heals crew',
+    '天文台': 'Obs.', '被动产科研 预警事件': 'Passive research',
+    '水循环站': 'Water', '减少50%氧气消耗': '-50% O2 use',
+    '机器人车间': 'Droid', '自动产矿物 无需船员': 'Auto-mine',
+    '雷达站': 'Radar', '探测陨石 减少事件损失': 'Meteor defense',
+    '同位素发电': 'RTG Power', '解锁同位素发电机（全天供电）': 'Unlock RTG',
+    '深空通讯': 'Comm', '解锁通讯塔（触发事件与贸易）': 'Unlock Comm',
+    '休闲设施': 'Rec', '解锁娱乐室（维持船员士气）': 'Unlock Rec',
+    '高效光伏': 'Solar+', '太阳能板效率+50%': 'Solar +50%',
+    '循环制氧': 'O2+', '制氧机效率+50%': 'O2 +50%',
+    '深层钻探': 'Mine+', '采矿场效率+50%': 'Mine +50%',
+    '水培栽培': 'Farm+', '温室效率+50%': 'Farm +50%',
+    '量子计算': 'Lab+', '实验室效率+80%': 'Lab +80%',
+    '压缩仓储': 'Storage+', '所有存储上限+200': 'Caps +200',
+    '扩展居所': 'Hab+', '居住舱容量+2': 'Hab +2',
+    '月球核心计划': 'Core Plan', '解锁终极建筑：月球核心': 'Unlock Core',
+    '星际贸易': 'Trade+', '贸易站效率+50%，每次贸易额外获得10金币': 'Trade +50%',
+    '能量存储': 'Energy+', '所有建筑能耗-20%': 'Energy -20%',
+    '招募策略': 'Recruit+', '招募船员费用-30%': 'Recruit -30%',
+    '医疗技术': 'Med Tech', '解锁医务室（治疗船员，降低死亡风险）': 'Unlock Medbay',
+    '天文观测': 'Obs Tech', '解锁天文台（被动科研+预警事件）': 'Unlock Obs.',
+    '水循环技术': 'Water Tech', '解锁水循环站（减少50%氧气消耗）': 'Unlock Water',
+    '机器人技术': 'Droid Tech', '解锁机器人车间（自动采矿，无需船员）': 'Unlock Droid',
+    '陨石防御': 'Shield', '解锁雷达站（探测陨石，减少事件损害）': 'Unlock Radar',
+    '初阶地表改造': 'Terraform', '所有资源产能+20%，解锁月球核心前的终阶科技': 'All +20%',
+    '积分保护': 'Expiry Protect', '阻止每天30%积分的自动过期': 'Block 30% expiry',
+    '高级医疗': 'Med+', '医务室治疗效率翻倍': 'Heal x2',
+    '智能采矿': 'Droid+', '机器人车间产量翻倍': 'Droid x2',
+    '深空预警': 'Radar+', '雷达站保护提升至90%': 'Radar 90%',
+    '关闭': 'Close', '确定': 'OK', '了解': 'Got it',
+    '拆除': 'Demolish', '分配船员': 'Assign', '取消分配': 'Unassign',
+    '全部撤回': 'Recall', '贸易': 'Trade',
+    '保存游戏': 'Save', '读取存档': 'Load', '重新开始': 'Restart',
+    '继续游戏': 'Continue', '游戏状态': 'Status', '资源动态': 'Rates',
+    '音效': 'Sound', '存档': 'Save', '成就': 'Achievements',
+    '当前': 'Current', '开启': 'ON', '关闭': 'OFF',
+    '开启音效': 'Sound ON', '关闭音效': 'Sound OFF',
+    '计算中...': '...', '消耗': 'Cost',
+    '科研中心': 'Research', '船员管理': 'Crew',
+    '当前金币': 'Credits', '效率+50%': '+50%',
+    '招募新船员': 'Recruit', '空闲': 'Idle', '职业': 'Job',
+    '采矿': 'Mine', '务农': 'Farm', '工程': 'Eng',
+    '产': '+', '耗': '-', '提供居住': 'Housing',
+    '日': '', '人': '', '座': '', '项': '', '个': '', '次': '',
+    '清除当前进度，重新开始游戏': 'Reset progress',
+    '保存进度到本地': 'Save locally',
+    '无存档': 'No save', '已保存': 'Saved', '已读取': 'Loaded',
+    '新游戏开始': 'New game', '已分配': 'Assigned', '已研发': 'Done',
+    '资源不足！': 'Low resources!', '科研点不足！': 'Low research!',
+    '居住舱不足！': 'Low habitat!', '没有空闲船员！': 'No free crew!',
+    '新船员加入！': 'Crew joined!', '已取消分配': 'Unassigned',
+    '已撤回全部船员': 'All recalled',
+    '已拆除（返还50%资源）': 'Demolished (50% back)',
+    '已取消建造模式。': 'Build cancelled.',
+    '无法放置在此处': 'Cannot place here',
+    '交易完成！': 'Trade done!',
+    '研发成功：': 'Researched: ', '成就解锁：': 'Unlocked: ',
+    '因病离世...': ' died', '因居住舱不足离开了殖民地': ' left (no habitat)',
+    '医务室已处理紧急情况': 'Medbay handled it',
+    '无医务室！-15士气': 'No Medbay! -15 morale',
+    '雷达站成功拦截陨石！+30金币': 'Radar saved us! +30cr',
+    '陨石擦过！-15能量': 'Meteor grazed! -15e',
+    '+%s 矿物': '+%s Min', '-%s 矿物': '-%s Min',
+    '+50 能量': '+50 Eng', '-30 能量': '-30 Eng',
+    '+%s 科研': '+%s Res', '-%s 科研': '-%s Res',
+    '+%s 食物': '+%s Food', '-%s 氧气': '-%s O2',
+    '+1 船员': '+1 Crew', '+20 士气': '+20 Mor',
+    '-20 能量 -5 士气': '-20e -5mor',
+    '+20 金币 +15 士气': '+20cr +15mor',
+    '+25食物 +30金币 +25能量': '+25f +30cr +25e',
+    '-15食物 -10士气': '-15f -10mor',
+    '+50 科研 +10 士气': '+50r +10mor',
+    '+%s 科研 +5 士气': '+%s r +5mor',
+    '选中：': 'Selected: ',
+    '。点击地图放置，按建造键取消。': '. Tap to place, Build to cancel.',
+    '继续点击放置': 'Tap to place',
+    '，或按建造键退出。': ', Build to exit.',
+    '资源不足，已退出建造模式。': 'Low res, build cancelled.',
+    '先建': 'Build', '和': '&', '维持生存。建': 'first. Then',
+    '发展。': 'for growth.',
+    '触发事件后研发解锁更多建筑！': 'to unlock more!',
+    '新游戏开始。点击': 'New game. Tap',
+    '开始建设。': 'to start.',
+    '（需至少1人）': '(needs 1+)',
+    '矿场': 'Mine', '建筑': 'bldg', '科技': 'tech', '事件': 'event',
+    '陨石撞击': 'Meteor', '一颗陨石击中了基地！部分建筑受损。': 'Meteor hit! Buildings damaged.',
+    '冰矿发现': 'Ice', '勘探队发现了地下冰矿！获得大量矿物。': 'Found ice! +Mineral.',
+    '太阳能风暴': 'Flare', '太阳活动剧烈，太阳能板效率大增！': 'Solar boost!',
+    '贸易商船': 'Trade Ship', '地球贸易船到达，可用金币换取资源。': 'Trade ship arrived.',
+    '新移民': 'Immigrants', '一批新移民希望加入殖民地！': 'Immigrants want to join!',
+    '设备故障': 'Failure', '一台设备出现故障，损失部分能量。': 'Equipment failed. -Energy.',
+    '科学突破': 'Breakthrough', '研究人员取得了重大突破！获得科研点。': 'Breakthrough! +Research.',
+    '月面日出': 'Sunrise', '壮丽的地球升起，船员士气大振！': 'Earthrise! +Morale.',
+    '月震': 'Quake', '轻微月震震动了基地，部分资源散落。': 'Moonquake! -Resources.',
+    '富矿脉发现': 'Rich Vein', '采矿场发现了富矿脉，矿物产量临时大增！': 'Rich vein! +Mineral.',
+    '船员训练': 'Training', '一名船员完成了专项训练，能力提升！': 'Crew trained! +Stats.',
+    '沙暴来袭': 'Sandstorm', '月面沙暴覆盖了太阳能板，能量暂停恢复。': 'Sandstorm! Solar paused.',
+    '月面探测': 'Survey', '月球车发现了稀有氦-3矿藏！获得大量科研点。': 'Found He-3! +Research.',
+    '殖民地节日': 'Festival', '今天是殖民地成立纪念日，船员们举行了小型庆祝活动！': 'Founding day! +Morale.',
+    '氧气泄漏': 'O2 Leak', '管道系统出现裂缝导致氧气泄漏，需紧急修复。': 'O2 leak! -Oxygen.',
+    '地球援助': 'Aid', '地球总部空投了补给包！获得随机资源。': 'Earth aid! +Resources.',
+    '宇宙射线': 'Cosmic Rays', '异常宇宙射线影响了电子设备，损失部分科研点。': 'Cosmic rays! -Research.',
+    '作物丰收': 'Harvest', '温室的月球改良土壤效果显著，粮食大丰收！': 'Bumper crop! +Food.',
+    '技术交流': 'Exchange', '其他月球站的技术专家来访，分享了一项技术。': 'Tech exchange! +Research.',
+    '物资短缺': 'Shortage', '物流中断导致部分补给延误。': 'Shortage! -Resources.',
+    '科研竞赛': 'Contest', '全球月球科研竞赛开赛，实验室效率临时大增！': 'Contest! Lab boosted.',
+    '医疗紧急': 'Emergency', '一名船员突发急病！如有医务室将自动救治。': 'Medical emergency!',
+    '雷达预警': 'Radar Alert', '雷达站提前探测到了陨石威胁，成功规避！': 'Radar saved us!',
+    '小队成立': 'Squad', '5名船员': '5 crew',
+    '殖民地': 'Colony', '10名船员': '10 crew',
+    '月球都市': 'City', '20名船员': '20 crew',
+    '十日生存': '10 Days', '第10天': 'Day 10',
+    '月球老兵': 'Veteran', '第30天': 'Day 30',
+    '月球传奇': 'Legend', '第50天': 'Day 50',
+    '科研先锋': 'Pioneer', '3项科技': '3 techs',
+    '科技大师': 'Master', '7项科技': '7 techs',
+    '科学家': 'Scientist', '12项科技': '12 techs',
+    '富甲月球': 'Tycoon', '500金币': '500cr',
+    '月球大亨': 'Magnate', '1500金币': '1500cr',
+    '核心启动': 'Core Online', '建造月球核心': 'Build Core',
+    '繁荣殖民地': 'Thriving', '20座建筑': '20 bldgs',
+    '医疗保障': 'Med Care', '建造医务室': 'Build Medbay',
+    '安全第一': 'Safety', '建造雷达站': 'Build Radar',
+    '指挥官 阿尔法': 'Cmdr Alpha', '工程师 贝塔': 'Eng Beta',
+    '伽马': 'Gamma', '德尔塔': 'Delta', '艾普西龙': 'Epsilon',
+    '泽塔': 'Zeta', '伊塔': 'Eta', '西塔': 'Theta',
+    '艾欧塔': 'Iota', '卡帕': 'Kappa', '拉姆': 'Lambda', '缪': 'Mu',
+    '★ 胜利！★': '★ VICTORY! ★',
+    '恭喜！你成功建造了月球核心，并拥有20名船员。': 'You built the Core and reached 20 crew!',
+    '月球殖民地正式成为月球都市！': 'The colony is now a Lunar City!',
+    '用时：': 'Time: ', '天': ' days',
+    '★ 殖民地覆灭 ★': '★ COLONY LOST ★',
+    '资源耗尽，士气崩溃。': 'Resources depleted, morale collapsed.',
+    '殖民地存活了': 'Survived for',
+    '⚠ 积分过期警告': '⚠ Expiry Warning',
+    '你的积分已开始过期！': 'Points are expiring!',
+    '今日损失了': 'Lost today:',
+    '积分。': ' pts.',
+    '科技可阻止积分过期。': ' can prevent expiry.',
+    '第': 'Day ', '第1日': 'Day 1', '第%s日': 'Day %s',
+    '再次点击确认重置': 'Click again to confirm reset',
+    '欢迎来到月球！点击<b>建造</b> 开始你的殖民地。目标：建造<b>月球核心</b> 并拥有 20 名船员。注意：第 5天起积分将开始过期！': 'Welcome to the Moon! Click <b>Build</b> to start your colony. Goal: Build the <b>Lunar Core</b> and reach 20 crew. Note: points start expiring from Day 5!',
+    '中文': '中文', 'English': 'English',
+  }
+};
+function T(zh){
+  if(I18N.lang === 'zh') return zh;
+  const en = I18N.en[zh];
+  return en !== undefined ? en : zh;
+}
+function TF(zh, ...args){
+  let s = T(zh);
+  for(const a of args) s = s.replace('%s', a);
+  return s;
+}
+function setLang(lang){
+  I18N.lang = lang;
+  localStorage.setItem('lunarColonyLang', lang);
+  if(typeof updateHUD === 'function') updateHUD();
+}
+
 
 // ---- 配置 ----
 const TILE = 40;
@@ -305,61 +500,61 @@ function drawResIcon(c, key){
 
 // ---- 建筑定义 ----
 const BDEF = {
-  habitat:    {name:'居住舱',  desc:'容纳+2船员', cost:{mineral:20,credit:40},  cap:{colonist:2}, col:'#e8ecff', unlock:true},
-  solar:       {name:'太阳能板',desc:'白天产能量', cost:{mineral:10,credit:25},  prod:{energy:0.8}, dayOnly:true, col:'#ffd34e', unlock:true},
-  rtg:         {name:'同位素发电机',desc:'全天产能量',cost:{mineral:30,credit:60}, prod:{energy:0.5}, col:'#ff9844', tech:'rtg'},
-  oxygen:      {name:'制氧机',  desc:'产氧气',   cost:{mineral:15,credit:35}, prod:{oxygen:0.7}, use:{energy:0.15}, col:'#7ad7ff', unlock:true},
-  mine:        {name:'采矿场',  desc:'产矿物 需船员', cost:{mineral:0,credit:50},  prod:{mineral:0.5}, use:{energy:0.1}, needCrew:true, job:'mining', col:'#c9a0ff', unlock:true},
-  greenhouse:  {name:'温室',   desc:'产食物 需船员', cost:{mineral:20,credit:55}, prod:{food:0.5}, use:{energy:0.12,oxygen:0.05}, needCrew:true, job:'farming', col:'#7ae870', unlock:true},
-  lab:         {name:'实验室',  desc:'产科研 需船员', cost:{mineral:35,credit:80}, prod:{research:0.4}, use:{energy:0.15}, needCrew:true, job:'science', col:'#7ad7ff', unlock:true},
-  storage:     {name:'仓库',    desc:'提升存储上限', cost:{mineral:25,credit:45}, capAdd:{energy:150,oxygen:150,mineral:150,food:150}, col:'#9aa0b8', unlock:true},
-  comm:        {name:'通讯塔',  desc:'解锁事件与贸易', cost:{mineral:30,credit:70}, flag:'comm', col:'#5ab8e8', tech:'comm'},
-  rec:         {name:'娱乐室',  desc:'提升士气', cost:{mineral:20,credit:50}, morale:0.5, use:{energy:0.08}, col:'#ff9844', tech:'rec'},
-  core:        {name:'月球核心', desc:'胜利建筑！', cost:{mineral:200,credit:200,research:500}, flag:'core', col:'#ffd34e', tech:'core'},
-  tradepost:   {name:'贸易站',  desc:'用金币换取资源', cost:{mineral:25,credit:60}, flag:'trade', col:'#ffe08a', tech:'comm'},
-  medbay:      {name:'医务室',  desc:'治疗船员 降低死亡风险', cost:{mineral:40,credit:70}, use:{energy:0.1}, healRate:0.3, col:'#ff6b6b', tech:'medtech'},
-  observatory: {name:'天文台',  desc:'被动产科研 预警事件', cost:{mineral:45,credit:90}, prod:{research:0.2}, use:{energy:0.08}, eventBoost:3, col:'#9ae0ff', tech:'obstech'},
-  waterpur:    {name:'水循环站',desc:'减少50%氧气消耗', cost:{mineral:30,credit:65}, use:{energy:0.06}, oxygenSave:0.5, col:'#7ad7ff', tech:'watertech'},
-  droidbay:    {name:'机器人车间',desc:'自动产矿物 无需船员', cost:{mineral:50,credit:100}, prod:{mineral:0.35}, use:{energy:0.18}, col:'#c9a0ff', tech:'droidtech'},
-  radar:       {name:'雷达站',  desc:'探测陨石 减少事件损失', cost:{mineral:35,credit:85}, use:{energy:0.12}, shield:0.5, col:'#5fe8a8', tech:'shieldtech'},
+  habitat:    {name:T('居住舱'),  desc:T('容纳+2船员'), cost:{mineral:20,credit:40},  cap:{colonist:2}, col:'#e8ecff', unlock:true},
+  solar:       {name:T('太阳能板'),desc:T('白天产能量'), cost:{mineral:10,credit:25},  prod:{energy:0.8}, dayOnly:true, col:'#ffd34e', unlock:true},
+  rtg:         {name:T('同位素发电机'),desc:T('全天产能量'),cost:{mineral:30,credit:60}, prod:{energy:0.5}, col:'#ff9844', tech:'rtg'},
+  oxygen:      {name:T('制氧机'),  desc:T('产氧气'),   cost:{mineral:15,credit:35}, prod:{oxygen:0.7}, use:{energy:0.15}, col:'#7ad7ff', unlock:true},
+  mine:        {name:T('采矿场'),  desc:T('产矿物 需船员'), cost:{mineral:0,credit:50},  prod:{mineral:0.5}, use:{energy:0.1}, needCrew:true, job:'mining', col:'#c9a0ff', unlock:true},
+  greenhouse:  {name:T('温室'),   desc:T('产食物 需船员'), cost:{mineral:20,credit:55}, prod:{food:0.5}, use:{energy:0.12,oxygen:0.05}, needCrew:true, job:'farming', col:'#7ae870', unlock:true},
+  lab:         {name:T('实验室'),  desc:T('产科研 需船员'), cost:{mineral:35,credit:80}, prod:{research:0.4}, use:{energy:0.15}, needCrew:true, job:'science', col:'#7ad7ff', unlock:true},
+  storage:     {name:T('仓库'),    desc:T('提升存储上限'), cost:{mineral:25,credit:45}, capAdd:{energy:150,oxygen:150,mineral:150,food:150}, col:'#9aa0b8', unlock:true},
+  comm:        {name:T('通讯塔'),  desc:T('解锁事件与贸易'), cost:{mineral:30,credit:70}, flag:'comm', col:'#5ab8e8', tech:'comm'},
+  rec:         {name:T('娱乐室'),  desc:T('提升士气'), cost:{mineral:20,credit:50}, morale:0.5, use:{energy:0.08}, col:'#ff9844', tech:'rec'},
+  core:        {name:T('月球核心'), desc:T('胜利建筑！'), cost:{mineral:200,credit:200,research:500}, flag:'core', col:'#ffd34e', tech:'core'},
+  tradepost:   {name:T('贸易站'),  desc:T('用金币换取资源'), cost:{mineral:25,credit:60}, flag:'trade', col:'#ffe08a', tech:'comm'},
+  medbay:      {name:T('医务室'),  desc:T('治疗船员 降低死亡风险'), cost:{mineral:40,credit:70}, use:{energy:0.1}, healRate:0.3, col:'#ff6b6b', tech:'medtech'},
+  observatory: {name:T('天文台'),  desc:T('被动产科研 预警事件'), cost:{mineral:45,credit:90}, prod:{research:0.2}, use:{energy:0.08}, eventBoost:3, col:'#9ae0ff', tech:'obstech'},
+  waterpur:    {name:T('水循环站'),desc:T('减少50%氧气消耗'), cost:{mineral:30,credit:65}, use:{energy:0.06}, oxygenSave:0.5, col:'#7ad7ff', tech:'watertech'},
+  droidbay:    {name:T('机器人车间'),desc:T('自动产矿物 无需船员'), cost:{mineral:50,credit:100}, prod:{mineral:0.35}, use:{energy:0.18}, col:'#c9a0ff', tech:'droidtech'},
+  radar:       {name:T('雷达站'),  desc:T('探测陨石 减少事件损失'), cost:{mineral:35,credit:85}, use:{energy:0.12}, shield:0.5, col:'#5fe8a8', tech:'shieldtech'},
 };
 
 // ---- 科技定义 ----
 const RDEF = {
-  rtg:    {name:'同位素发电', cost:60, desc:'解锁同位素发电机（全天供电）', unlock:'rtg'},
-  comm:   {name:'深空通讯', cost:80, desc:'解锁通讯塔（触发事件与贸易）', unlock:'comm'},
-  rec:    {name:'休闲设施', cost:100, desc:'解锁娱乐室（维持船员士气）', unlock:'rec'},
-  solar2: {name:'高效光伏', cost:120, desc:'太阳能板效率+50%', boost:{solar:1.5}},
-  oxygen2:{name:'循环制氧', cost:140, desc:'制氧机效率+50%', boost:{oxygen:1.5}},
-  mine2:  {name:'深层钻探', cost:160, desc:'采矿场效率+50%', boost:{mine:1.5}},
-  farm2:  {name:'水培栽培', cost:180, desc:'温室效率+50%', boost:{greenhouse:1.5}},
-  lab2:   {name:'量子计算', cost:220, desc:'实验室效率+80%', boost:{lab:1.8}},
-  storage2:{name:'压缩仓储', cost:120, desc:'所有存储上限+200', boost:{cap:200}},
-  habitat2:{name:'扩展居所', cost:150, desc:'居住舱容量+2', boost:{habitatCap:2}},
-  core:   {name:'月球核心计划', cost:300, desc:'解锁终极建筑：月球核心', unlock:'core'},
-  trade2: {name:'星际贸易', cost:100, desc:'贸易站效率+50%，每次贸易额外获得10金币', boost:{trade:1.5}},
-  energy2:{name:'能量存储', cost:90, desc:'所有建筑能耗-20%', boost:{energyUse:0.8}},
-  recruit:{name:'招募策略', cost:110, desc:'招募船员费用-30%', boost:{recruit:0.7}},
-  medtech: {name:'医疗技术', cost:100, desc:'解锁医务室（治疗船员，降低死亡风险）', unlock:'medtech'},
-  obstech: {name:'天文观测', cost:130, desc:'解锁天文台（被动科研+预警事件）', unlock:'obstech'},
-  watertech:{name:'水循环技术', cost:120, desc:'解锁水循环站（减少50%氧气消耗）', unlock:'watertech'},
-  droidtech:{name:'机器人技术', cost:150, desc:'解锁机器人车间（自动采矿，无需船员）', unlock:'droidtech'},
-  shieldtech:{name:'陨石防御', cost:140, desc:'解锁雷达站（探测陨石，减少事件损害）', unlock:'shieldtech'},
-  terraform:{name:'初阶地表改造', cost:350, desc:'所有资源产能+20%，解锁月球核心前的终阶科技', boost:{allProd:1.2}},
-  expiryProtect:{name:'积分保护', cost:120, desc:'阻止每天30%积分的自动过期', unlock:'expiryProtect'},
-  medbay2: {name:'高级医疗', cost:180, desc:'医务室治疗效率翻倍', boost:{heal:2}},
-  robot2:  {name:'智能采矿', cost:200, desc:'机器人车间产量翻倍', boost:{droid:2}},
-  radar2:  {name:'深空预警', cost:170, desc:'雷达站保护提升至90%', boost:{shield:0.9}},
+  rtg:    {name:T('同位素发电'), cost:60, desc:T('解锁同位素发电机（全天供电）'), unlock:'rtg'},
+  comm:   {name:T('深空通讯'), cost:80, desc:T('解锁通讯塔（触发事件与贸易）'), unlock:'comm'},
+  rec:    {name:T('休闲设施'), cost:100, desc:T('解锁娱乐室（维持船员士气）'), unlock:'rec'},
+  solar2: {name:T('高效光伏'), cost:120, desc:T('太阳能板效率+50%'), boost:{solar:1.5}},
+  oxygen2:{name:T('循环制氧'), cost:140, desc:T('制氧机效率+50%'), boost:{oxygen:1.5}},
+  mine2:  {name:T('深层钻探'), cost:160, desc:T('采矿场效率+50%'), boost:{mine:1.5}},
+  farm2:  {name:T('水培栽培'), cost:180, desc:T('温室效率+50%'), boost:{greenhouse:1.5}},
+  lab2:   {name:T('量子计算'), cost:220, desc:T('实验室效率+80%'), boost:{lab:1.8}},
+  storage2:{name:T('压缩仓储'), cost:120, desc:T('所有存储上限+200'), boost:{cap:200}},
+  habitat2:{name:T('扩展居所'), cost:150, desc:T('居住舱容量+2'), boost:{habitatCap:2}},
+  core:   {name:T('月球核心计划'), cost:300, desc:T('解锁终极建筑：月球核心'), unlock:'core'},
+  trade2: {name:T('星际贸易'), cost:100, desc:T('贸易站效率+50%，每次贸易额外获得10金币'), boost:{trade:1.5}},
+  energy2:{name:T('能量存储'), cost:90, desc:T('所有建筑能耗-20%'), boost:{energyUse:0.8}},
+  recruit:{name:T('招募策略'), cost:110, desc:T('招募船员费用-30%'), boost:{recruit:0.7}},
+  medtech: {name:T('医疗技术'), cost:100, desc:T('解锁医务室（治疗船员，降低死亡风险）'), unlock:'medtech'},
+  obstech: {name:T('天文观测'), cost:130, desc:T('解锁天文台（被动科研+预警事件）'), unlock:'obstech'},
+  watertech:{name:T('水循环技术'), cost:120, desc:T('解锁水循环站（减少50%氧气消耗）'), unlock:'watertech'},
+  droidtech:{name:T('机器人技术'), cost:150, desc:T('解锁机器人车间（自动采矿，无需船员）'), unlock:'droidtech'},
+  shieldtech:{name:T('陨石防御'), cost:140, desc:T('解锁雷达站（探测陨石，减少事件损害）'), unlock:'shieldtech'},
+  terraform:{name:T('初阶地表改造'), cost:350, desc:T('所有资源产能+20%，解锁月球核心前的终阶科技'), boost:{allProd:1.2}},
+  expiryProtect:{name:T('积分保护'), cost:120, desc:T('阻止每天30%积分的自动过期'), unlock:'expiryProtect'},
+  medbay2: {name:T('高级医疗'), cost:180, desc:T('医务室治疗效率翻倍'), boost:{heal:2}},
+  robot2:  {name:T('智能采矿'), cost:200, desc:T('机器人车间产量翻倍'), boost:{droid:2}},
+  radar2:  {name:T('深空预警'), cost:170, desc:T('雷达站保护提升至90%'), boost:{shield:0.9}},
 };
 
 // ---- 资源定义 ----
 const RES = [
-  {key:'energy',  name:'能量',  icon:'#ffd34e', cap:300, start:120},
-  {key:'oxygen',   name:'氧气',  icon:'#7ad7ff', cap:300, start:120},
-  {key:'mineral',  name:'矿物',  icon:'#c9a0ff', cap:300, start:60},
-  {key:'food',     name:'食物',  icon:'#9fe870', cap:300, start:60},
-  {key:'credit',   name:'金币',  icon:'#ffe08a', cap:9999, start:500},
-  {key:'research', name:'科研',  icon:'#7ad7ff', cap:9999, start:0},{key:'expiry', name:'过期积分', icon:'#ff6b6b', cap:9999, start:0},
+  {key:'energy',  name:T('能量'),  icon:'#ffd34e', cap:300, start:120},
+  {key:'oxygen',   name:T('氧气'),  icon:'#7ad7ff', cap:300, start:120},
+  {key:'mineral',  name:T('矿物'),  icon:'#c9a0ff', cap:300, start:60},
+  {key:'food',     name:T('食物'),  icon:'#9fe870', cap:300, start:60},
+  {key:'credit',   name:T('金币'),  icon:'#ffe08a', cap:9999, start:500},
+  {key:'research', name:T('科研'),  icon:'#7ad7ff', cap:9999, start:0},{key:'expiry', name:T('过期积分'), icon:'#ff6b6b', cap:9999, start:0},
 ];
 
 // ---- 游戏状态 ----
@@ -405,8 +600,8 @@ function newGame(){
   // 重新生成地形
   terrain = generateTerrain();
   // 初始船员
-  addCrew('指挥官 阿尔法', {mining:2, farming:2, science:3, eng:4});
-  addCrew('工程师 贝塔', {mining:3, farming:2, science:2, eng:4});
+  addCrew(T('指挥官 阿尔法'), {mining:2, farming:2, science:3, eng:4});
+  addCrew(T('工程师 贝塔'), {mining:3, farming:2, science:2, eng:4});
   // 初始建筑：一个居住舱 + 太阳能板
   const cx = Math.floor(GRID_W/2), cy = Math.floor(GRID_H/2);
   placeBuilding('habitat', cx, cy, true);
@@ -1490,37 +1685,37 @@ function checkAchievements(){
   const add = (id, name)=>{
     if(!G.achievements.has(id)){
       G.achievements.add(id);
-      toast('成就解锁：'+name, 'good');
+      toast(T('成就解锁：')+name, 'good');
       Sound.success();
     }
   };
-  if(G.crew.length >= 5) add('crew5','小队成立');
-  if(G.crew.length >= 10) add('crew10','殖民地');
-  if(G.crew.length >= 20) add('crew20','月球都市');
-  if(G.day >= 10) add('day10','十日生存');
-  if(G.day >= 30) add('day30','月球老兵');
-  if(Object.keys(G.researchDone).length >= 3) add('tech3','科研先锋');
-  if(Object.keys(G.researchDone).length >= 7) add('tech7','科技大师');
-  if(G.res.credit >= 500) add('rich','富甲月球');
-  if(G.res.credit >= 1500) add('rich2','月球大亨');
-  if(G.day >= 50) add('day50','月球传奇');
-  if(Object.keys(G.researchDone).length >= 12) add('tech12','科学家');
-  if(countBuildings() >= 20) add('build20','繁荣殖民地');
+  if(G.crew.length >= 5) add('crew5', T('小队成立'));
+  if(G.crew.length >= 10) add('crew10', T('殖民地'));
+  if(G.crew.length >= 20) add('crew20', T('月球都市'));
+  if(G.day >= 10) add('day10', T('十日生存'));
+  if(G.day >= 30) add('day30', T('月球老兵'));
+  if(Object.keys(G.researchDone).length >= 3) add('tech3', T('科研先锋'));
+  if(Object.keys(G.researchDone).length >= 7) add('tech7', T('科技大师'));
+  if(G.res.credit >= 500) add('rich', T('富甲月球'));
+  if(G.res.credit >= 1500) add('rich2', T('月球大亨'));
+  if(G.day >= 50) add('day50', T('月球传奇'));
+  if(Object.keys(G.researchDone).length >= 12) add('tech12', T('科学家'));
+  if(countBuildings() >= 20) add('build20', T('繁荣殖民地'));
   for(let i=0;i<G.grid.length;i++){
-    if(G.grid[i] && G.grid[i].type==='medbay'){ add('medbay','医疗保障'); break; }
+    if(G.grid[i] && G.grid[i].type==='medbay'){ add('medbay', T('医疗保障')); break; }
   }
   for(let i=0;i<G.grid.length;i++){
-    if(G.grid[i] && G.grid[i].type==='radar'){ add('radar','安全第一'); break; }
+    if(G.grid[i] && G.grid[i].type==='radar'){ add('radar', T('安全第一')); break; }
   }
   for(let i=0;i<G.grid.length;i++){
-    if(G.grid[i] && G.grid[i].type==='core'){ add('core','核心启动'); break; }
+    if(G.grid[i] && G.grid[i].type==='core'){ add('core', T('核心启动')); break; }
   }
 }
 
 // ---- 事件系统 ----
 const EVENTS = [
   {
-    title:'陨石撞击', desc:'一颗陨石击中了基地！部分建筑受损。',
+    title:T('陨石撞击'), desc:T('一颗陨石击中了基地！部分建筑受损。'),
     good:false, weight:3,
     apply(){
       const buildings = [];
@@ -1534,92 +1729,92 @@ const EVENTS = [
     }
   },
   {
-    title:'冰矿发现', desc:'勘探队发现了地下冰矿！获得大量矿物。',
+    title:T('冰矿发现'), desc:T('勘探队发现了地下冰矿！获得大量矿物。'),
     good:true, weight:3,
     apply(){
       const amt = 30 + Math.floor(Math.random()*30);
       G.res.mineral = Math.min(G.cap.mineral, G.res.mineral + amt);
-      floatText(canvasW/2, canvasH/2, '+'+amt+' 矿物', C.good);
+      floatText(canvasW/2, canvasH/2, TF('+%s 矿物', amt), C.good);
       Sound.coin();
     }
   },
   {
-    title:'太阳能风暴', desc:'太阳活动剧烈，太阳能板效率大增！',
+    title:T('太阳能风暴'), desc:T('太阳活动剧烈，太阳能板效率大增！'),
     good:true, weight:2,
     apply(){
       G.res.energy = Math.min(G.cap.energy, G.res.energy + 50);
-      floatText(canvasW/2, canvasH/2, '+50 能量', C.yellow);
+      floatText(canvasW/2, canvasH/2, T('+50 能量'), C.yellow);
       Sound.coin();
     }
   },
   {
-    title:'贸易商船', desc:'地球贸易船到达，可用金币换取资源。',
+    title:T('贸易商船'), desc:T('地球贸易船到达，可用金币换取资源。'),
     good:true, weight:3, custom:'trade',
   },
   {
-    title:'新移民', desc:'一批新移民希望加入殖民地！',
+    title:T('新移民'), desc:T('一批新移民希望加入殖民地！'),
     good:true, weight:3,
     apply(){
-      const names = ['伽马','德尔塔','艾普西龙','泽塔','伊塔','西塔','艾欧塔','卡帕'];
+      const names = [T('伽马'),T('德尔塔'),T('艾普西龙'),T('泽塔'),T('伊塔'),T('西塔'),T('艾欧塔'),T('卡帕')];
       const jobs = [{mining:3,farming:2,science:2,eng:2},{mining:2,farming:3,science:3,eng:2},{mining:2,farming:2,science:4,eng:3}];
       const n = names[Math.floor(Math.random()*names.length)];
       const j = jobs[Math.floor(Math.random()*jobs.length)];
       addCrew(n+' '+Math.floor(Math.random()*100), j);
-      floatText(canvasW/2, canvasH/2, '+1 船员', C.good);
+      floatText(canvasW/2, canvasH/2, T('+1 船员'), C.good);
       Sound.success();
     }
   },
   {
-    title:'设备故障', desc:'一台设备出现故障，损失部分能量。',
+    title:T('设备故障'), desc:T('一台设备出现故障，损失部分能量。'),
     good:false, weight:2,
     apply(){
       G.res.energy = Math.max(0, G.res.energy - 30);
-      floatText(canvasW/2, canvasH/2, '-30 能量', C.bad);
+      floatText(canvasW/2, canvasH/2, T('-30 能量'), C.bad);
       Sound.alert();
     }
   },
   {
-    title:'科学突破', desc:'研究人员取得了重大突破！获得科研点。',
+    title:T('科学突破'), desc:T('研究人员取得了重大突破！获得科研点。'),
     good:true, weight:2,
     apply(){
       const amt = 20 + Math.floor(Math.random()*20);
       G.res.research += amt;
-      floatText(canvasW/2, canvasH/2, '+'+amt+' 科研', C.glassLight);
+      floatText(canvasW/2, canvasH/2, TF('+%s 科研', amt), C.glassLight);
       Sound.success();
     }
   },
   {
-    title:'月面日出', desc:'壮丽的地球升起，船员士气大振！',
+    title:T('月面日出'), desc:T('壮丽的地球升起，船员士气大振！'),
     good:true, weight:2,
     apply(){
       G.morale = Math.min(100, G.morale + 20);
-      floatText(canvasW/2, canvasH/2, '+20 士气', C.good);
+      floatText(canvasW/2, canvasH/2, T('+20 士气'), C.good);
       Sound.day();
     }
   },
   {
-    title:'月震', desc:'轻微月震震动了基地，部分资源散落。',
+    title:T('月震'), desc:T('轻微月震震动了基地，部分资源散落。'),
     good:false, weight:2,
     apply(){
       const loss = 10 + Math.floor(Math.random()*15);
       G.res.mineral = Math.max(0, G.res.mineral - loss);
       G.shake = 5;
-      floatText(canvasW/2, canvasH/2, '-'+loss+' 矿物', C.bad);
+      floatText(canvasW/2, canvasH/2, TF('-%s 矿物', loss), C.bad);
       Sound.alert();
     }
   },
   {
-    title:'富矿脉发现', desc:'采矿场发现了富矿脉，矿物产量临时大增！',
+    title:T('富矿脉发现'), desc:T('采矿场发现了富矿脉，矿物产量临时大增！'),
     good:true, weight:2,
     apply(){
       const amt = 40 + Math.floor(Math.random()*40);
       G.res.mineral = Math.min(G.cap.mineral, G.res.mineral + amt);
-      floatText(canvasW/2, canvasH/2, '+'+amt+' 矿物', C.good);
+      floatText(canvasW/2, canvasH/2, TF('+%s 矿物', amt), C.good);
       Sound.coin();
     }
   },
   {
-    title:'船员训练', desc:'一名船员完成了专项训练，能力提升！',
+    title:T('船员训练'), desc:T('一名船员完成了专项训练，能力提升！'),
     good:true, weight:2,
     apply(){
       if(G.crew.length===0) return;
@@ -1632,132 +1827,132 @@ const EVENTS = [
     }
   },
   {
-    title:'沙暴来袭', desc:'月面沙暴覆盖了太阳能板，能量暂停恢复。',
+    title:T('沙暴来袭'), desc:T('月面沙暴覆盖了太阳能板，能量暂停恢复。'),
     good:false, weight:2,
     apply(){
       G.res.energy = Math.max(0, G.res.energy - 20);
       G.morale = Math.max(0, G.morale - 5);
-      floatText(canvasW/2, canvasH/2, '-20 能量 -5 士气', C.bad);
+      floatText(canvasW/2, canvasH/2, T('-20 能量 -5 士气'), C.bad);
       Sound.alert();
     }
   },
   {
-    title:'月面探测', desc:'月球车发现了稀有氦-3矿藏！获得大量科研点。',
+    title:T('月面探测'), desc:T('月球车发现了稀有氦-3矿藏！获得大量科研点。'),
     good:true, weight:2,
     apply(){
       const amt = 30 + Math.floor(Math.random()*40);
       G.res.research += amt;
-      floatText(canvasW/2, canvasH/2, '+' +amt+' 科研', C.glassLight);
+      floatText(canvasW/2, canvasH/2, TF('+%s 科研', amt), C.glassLight);
       Sound.success();
     }
   },
   {
-    title:'殖民地节日', desc:'今天是殖民地成立纪念日，船员们举行了小型庆祝活动！',
+    title:T('殖民地节日'), desc:T('今天是殖民地成立纪念日，船员们举行了小型庆祝活动！'),
     good:true, weight:2,
     apply(){
       G.morale = Math.min(100, G.morale + 15);
       G.res.credit += 20;
-      floatText(canvasW/2, canvasH/2, '+20 金币 +15 士气', C.good);
+      floatText(canvasW/2, canvasH/2, T('+20 金币 +15 士气'), C.good);
       Sound.day();
     }
   },
   {
-    title:'氧气泄漏', desc:'管道系统出现裂缝导致氧气泄漏，需紧急修复。',
+    title:T('氧气泄漏'), desc:T('管道系统出现裂缝导致氧气泄漏，需紧急修复。'),
     good:false, weight:2,
     apply(){
       const loss = 20 + Math.floor(Math.random()*30);
       G.res.oxygen = Math.max(0, G.res.oxygen - loss);
       G.morale = Math.max(0, G.morale - 8);
-      floatText(canvasW/2, canvasH/2, '-' +loss+' 氧气', C.bad);
+      floatText(canvasW/2, canvasH/2, TF('-%s 氧气', loss), C.bad);
       Sound.alert();
     }
   },
   {
-    title:'地球援助', desc:'地球总部空投了补给包！获得随机资源。',
+    title:T('地球援助'), desc:T('地球总部空投了补给包！获得随机资源。'),
     good:true, weight:2,
     apply(){
       G.res.food = Math.min(G.cap.food, G.res.food + 25);
       G.res.credit = Math.min(G.cap.credit, G.res.credit + 30);
       G.res.energy = Math.min(G.cap.energy, G.res.energy + 25);
-      floatText(canvasW/2, canvasH/2, '+25食物 +30金币 +25能量', C.good);
+      floatText(canvasW/2, canvasH/2, T('+25食物 +30金币 +25能量'), C.good);
       Sound.coin();
     }
   },
   {
-    title:'宇宙射线', desc:'异常宇宙射线影响了电子设备，损失部分科研点。',
+    title:T('宇宙射线'), desc:T('异常宇宙射线影响了电子设备，损失部分科研点。'),
     good:false, weight:2,
     apply(){
       const loss = 15 + Math.floor(Math.random()*20);
       G.res.research = Math.max(0, G.res.research - loss);
-      floatText(canvasW/2, canvasH/2, '-' +loss+' 科研', C.bad);
+      floatText(canvasW/2, canvasH/2, TF('-%s 科研', loss), C.bad);
       Sound.alert();
     }
   },
   {
-    title:'作物丰收', desc:'温室的月球改良土壤效果显著，粮食大丰收！',
+    title:T('作物丰收'), desc:T('温室的月球改良土壤效果显著，粮食大丰收！'),
     good:true, weight:2,
     apply(){
       const amt = 40 + Math.floor(Math.random()*30);
       G.res.food = Math.min(G.cap.food, G.res.food + amt);
-      floatText(canvasW/2, canvasH/2, '+' +amt+' 食物', C.good);
+      floatText(canvasW/2, canvasH/2, TF('+%s 食物', amt), C.good);
       Sound.coin();
     }
   },
   {
-    title:'技术交流', desc:'其他月球站的技术专家来访，分享了一项技术。',
+    title:T('技术交流'), desc:T('其他月球站的技术专家来访，分享了一项技术。'),
     good:true, weight:2,
     apply(){
       const amt = 25 + Math.floor(Math.random()*20);
       G.res.research += amt;
       G.morale = Math.min(100, G.morale + 5);
-      floatText(canvasW/2, canvasH/2, '+' +amt+' 科研 +5 士气', C.good);
+      floatText(canvasW/2, canvasH/2, TF('+%s 科研 +5 士气', amt), C.good);
       Sound.success();
     }
   },
   {
-    title:'物资短缺', desc:'物流中断导致部分补给延误。',
+    title:T('物资短缺'), desc:T('物流中断导致部分补给延误。'),
     good:false, weight:2,
     apply(){
       G.res.food = Math.max(0, G.res.food - 15);
       G.morale = Math.max(0, G.morale - 10);
-      floatText(canvasW/2, canvasH/2, '-15食物 -10士气', C.bad);
+      floatText(canvasW/2, canvasH/2, T('-15食物 -10士气'), C.bad);
       Sound.alert();
     }
   },
   {
-    title:'科研竞赛', desc:'全球月球科研竞赛开赛，实验室效率临时大增！',
+    title:T('科研竞赛'), desc:T('全球月球科研竞赛开赛，实验室效率临时大增！'),
     good:true, weight:2,
     apply(){
       G.res.research += 50;
       G.morale = Math.min(100, G.morale + 10);
-      floatText(canvasW/2, canvasH/2, '+50 科研 +10 士气', C.glassLight);
+      floatText(canvasW/2, canvasH/2, T('+50 科研 +10 士气'), C.glassLight);
       Sound.success();
     }
   },
   {
-    title:'医疗紧急', desc:'一名船员突发急病！如有医务室将自动救治。',
+    title:T('医疗紧急'), desc:T('一名船员突发急病！如有医务室将自动救治。'),
     good:false, weight:2,
     apply(){
       let hasMedbay = false;
       for(const b of G.grid) if(b && b.type==='medbay'){ hasMedbay = true; break; }
       if(hasMedbay){
-        floatText(canvasW/2, canvasH/2, '医务室已处理紧急情况', C.good);
+        floatText(canvasW/2, canvasH/2, T('医务室已处理紧急情况'), C.good);
         Sound.success();
       } else {
         G.morale = Math.max(0, G.morale - 15);
         if(G.crew.length > 1){
           const idx = Math.floor(Math.random()*G.crew.length);
           const removed = G.crew.splice(idx, 1)[0];
-          toast(removed.name+' 因病离世...', 'bad');
+          toast(removed.name+T(' 因病离世...'), 'bad');
         }
-        floatText(canvasW/2, canvasH/2, '无医务室！-15士气', C.bad);
+        floatText(canvasW/2, canvasH/2, T('无医务室！-15士气'), C.bad);
         Sound.alert();
       }
     },
     filter(){ return G.crew.length > 0; }
   },
   {
-    title:'雷达预警', desc:'雷达站提前探测到了陨石威胁，成功规避！',
+    title:T('雷达预警'), desc:T('雷达站提前探测到了陨石威胁，成功规避！'),
     good:true, weight:2,
     apply(){
       let hasRadar = false;
@@ -1765,12 +1960,12 @@ const EVENTS = [
       if(hasRadar){
         const shield = G.researchDone.radar2 ? 0.9 : 0.5;
         G.res.credit += Math.floor(30 * shield);
-        floatText(canvasW/2, canvasH/2, '雷达站成功拦截陨石！+30金币', C.good);
+        floatText(canvasW/2, canvasH/2, T('雷达站成功拦截陨石！+30金币'), C.good);
         Sound.success();
       } else {
         G.res.energy = Math.max(0, G.res.energy - 15);
         G.shake = 4;
-        floatText(canvasW/2, canvasH/2, '陨石擦过！-15能量', C.bad);
+        floatText(canvasW/2, canvasH/2, T('陨石擦过！-15能量'), C.bad);
         Sound.alert();
       }
     }
@@ -1812,8 +2007,8 @@ function showTradeMenu(){
     {give:'credit', giveAmt:120, get:'oxygen', getAmt:Math.floor(60*tradeMult)},
   ];
   G.tradeOffers = offers;
-  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>贸易站</h2>';
-  html += '<div style="text-align:center;font-size:10px;color:var(--dim);margin-bottom:8px">当前金币: <b style="color:var(--accent)">'+Math.floor(G.res.credit)+'</b>'+(tradeMult>1?' · <span style="color:var(--good)">效率+50%</span>':'')+'</div>';
+  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>'+T('贸易站')+'</h2>';
+  html += '<div style="text-align:center;font-size:10px;color:var(--dim);margin-bottom:8px">'+T('当前金币')+': <b style="color:var(--accent)">'+Math.floor(G.res.credit)+'</b>'+(tradeMult>1?' · <span style="color:var(--good)">效率+50%</span>':'')+'</div>';
   html += '<div style="display:flex;flex-direction:column;gap:5px">';
   for(let i=0;i<offers.length;i++){
     const o = offers[i];
@@ -1832,7 +2027,7 @@ function showTradeMenu(){
         G.res[o.give] -= o.giveAmt;
         G.res[o.get] = Math.min(G.cap[o.get], G.res[o.get] + o.getAmt);
         o.accepted = true;
-        floatText(canvasW/2, canvasH/2, '交易完成！', C.good);
+        floatText(canvasW/2, canvasH/2, T('交易完成！'), C.good);
         Sound.coin();
         btn.disabled = true;
         btn.style.opacity = 0.5;
@@ -1866,9 +2061,9 @@ function showEventPopup(ev){
       html += '<button class="evbtn" style="background:'+(can?'#2a3060':'#3a2020')+';color:'+(can?'#e8ecff':'#888')+'" data-trade="'+i+'" '+(can?'':'disabled')+'>'+o.giveAmt+' '+giveName+' → '+o.getAmt+' '+getName+'</button>';
     }
     html += '</div>';
-    html += '<button class="evbtn" id="ev-close">关闭</button>';
+    html += '<button class="evbtn" id="ev-close">'+T('关闭')+'</button>';
   } else {
-    html += '<button class="evbtn" id="ev-ok">确定</button>';
+    html += '<button class="evbtn" id="ev-ok">'+T('确定')+'</button>';
   }
   box.innerHTML = html;
   document.getElementById('eventpop').classList.add('on');
@@ -1889,7 +2084,7 @@ function showEventPopup(ev){
           G.res[o.give] -= o.giveAmt;
           G.res[o.get] = Math.min(G.cap[o.get], G.res[o.get] + o.getAmt);
           o.accepted = true;
-          floatText(canvasW/2, canvasH/2, '交易完成！', C.good);
+          floatText(canvasW/2, canvasH/2, T('交易完成！'), C.good);
           Sound.coin();
           btn.disabled = true;
           btn.style.opacity = 0.5;
@@ -1914,7 +2109,7 @@ function closeEvent(){
 function drawEventIcon(c, ev){
   c.fillStyle = '#0a0e1a';
   c.fillRect(0,0,48,48);
-  if(ev.title.includes('陨石')){
+  if(ev.icon === 'meteor'){
     c.fillStyle = C.crater;
     c.fillRect(8,8,32,32);
     c.fillStyle = '#1a1820';
@@ -1923,7 +2118,7 @@ function drawEventIcon(c, ev){
     c.fillRect(20,4,8,8);
     c.fillStyle = C.yellow;
     c.fillRect(22,2,4,4);
-  } else if(ev.title.includes('冰矿')||ev.title.includes('矿物')){
+  } else if(ev.icon === 'ice'){
     c.fillStyle = C.purpleDark;
     c.fillRect(10,20,28,16);
     c.fillStyle = C.purple;
@@ -1932,7 +2127,7 @@ function drawEventIcon(c, ev){
     c.fillStyle = '#fff';
     c.fillRect(16,18,2,2);
     c.fillRect(28,16,2,2);
-  } else if(ev.title.includes('风暴')||ev.title.includes('能量')){
+  } else if(ev.icon === 'solar'){
     c.fillStyle = C.sun;
     c.fillRect(16,16,16,16);
     c.fillStyle = C.sunCore;
@@ -1942,7 +2137,7 @@ function drawEventIcon(c, ev){
     c.fillRect(34,22,6,4);
     c.fillRect(22,8,4,6);
     c.fillRect(22,34,4,6);
-  } else if(ev.title.includes('贸易')){
+  } else if(ev.icon === 'trade'){
     c.fillStyle = C.metal;
     c.fillRect(8,20,32,12);
     c.fillStyle = C.yellow;
@@ -1950,7 +2145,7 @@ function drawEventIcon(c, ev){
     c.fillRect(24,24,8,4);
     c.fillStyle = C.earth;
     c.fillRect(20,4,8,8);
-  } else if(ev.title.includes('移民')||ev.title.includes('船员')){
+  } else if(ev.icon === 'immigrant'){
     c.fillStyle = C.suit;
     c.fillRect(18,12,12,20);
     c.fillStyle = C.visor;
@@ -1958,7 +2153,7 @@ function drawEventIcon(c, ev){
     c.fillStyle = C.metalDark;
     c.fillRect(18,32,4,4);
     c.fillRect(26,32,4,4);
-  } else if(ev.title.includes('故障')){
+  } else if(ev.icon === 'failure'){
     c.fillStyle = C.red;
     c.fillRect(20,8,8,8);
     c.fillStyle = C.yellow;
@@ -1969,7 +2164,7 @@ function drawEventIcon(c, ev){
     c.fillRect(16,24,4,4);
     c.fillRect(28,24,4,4);
     c.fillRect(22,30,4,2);
-  } else if(ev.title.includes('科研')||ev.title.includes('突破')){
+  } else if(ev.icon === 'research'){
     c.fillStyle = C.glass;
     c.fillRect(12,12,24,24);
     c.fillStyle = C.glassLight;
@@ -1979,7 +2174,7 @@ function drawEventIcon(c, ev){
     c.fillRect(26,22,4,4);
     c.fillStyle = C.yellow;
     c.fillRect(22,28,4,2);
-  } else if(ev.title.includes('日出')||ev.title.includes('士气')){
+  } else if(ev.icon === 'sunrise'||ev.icon === 'sunrise'){
     c.fillStyle = C.earth;
     c.fillRect(8,28,32,12);
     c.fillStyle = C.earthLand;
@@ -1989,7 +2184,7 @@ function drawEventIcon(c, ev){
     c.fillRect(20,8,8,8);
     c.fillStyle = C.sunCore;
     c.fillRect(22,10,4,4);
-  } else if(ev.title.includes('月震')){
+  } else if(ev.icon === 'quake'){
     c.fillStyle = C.regolith2;
     c.fillRect(4,20,40,20);
     c.fillStyle = C.crater;
@@ -2002,7 +2197,7 @@ function drawEventIcon(c, ev){
     c.fillStyle = C.yellow;
     c.fillRect(6,14,4,2);
     c.fillRect(38,14,4,2);
-  } else if(ev.title.includes('富矿')){
+  } else if(ev.icon === 'ice'){
     c.fillStyle = C.purpleDark;
     c.fillRect(6,14,36,24);
     c.fillStyle = C.purple;
@@ -2015,7 +2210,7 @@ function drawEventIcon(c, ev){
     c.fillRect(32,20,2,2);
     c.fillStyle = C.yellow;
     c.fillRect(16,22,4,4);
-  } else if(ev.title.includes('训练')){
+  } else if(ev.icon === 'immigrant'){
     c.fillStyle = C.suit;
     c.fillRect(16,10,16,24);
     c.fillStyle = C.visor;
@@ -2028,7 +2223,7 @@ function drawEventIcon(c, ev){
     c.fillStyle = C.greenDark;
     c.fillRect(8,34,6,2);
     c.fillRect(34,34,6,2);
-  } else if(ev.title.includes('沙暴')){
+  } else if(ev.icon === 'solar'){
     c.fillStyle = C.regolith3;
     c.fillRect(0,16,48,24);
     c.fillStyle = C.regolithDark;
@@ -2042,21 +2237,21 @@ function drawEventIcon(c, ev){
     c.fillRect(8,8,6,4);
     c.fillRect(34,10,6,4);
   
-  } else if(ev.title.includes('探测')||ev.title.includes('矿藏')||ev.title.includes('氦')){
+  } else if(ev.icon === 'research'||ev.icon === 'research'||ev.icon === 'research'){
     c.fillStyle = C.purpleDark; c.fillRect(8,20,32,16);
     c.fillStyle = C.purple; c.fillRect(12,16,8,8); c.fillRect(28,14,8,10);
     c.fillStyle = C.yellow; c.fillRect(20,8,8,8);
     c.fillStyle = C.sunCore; c.fillRect(22,10,4,4);
     c.fillStyle = '#fff'; c.fillRect(14,18,2,2); c.fillRect(30,16,2,2);
     c.fillStyle = C.green; c.fillRect(10,30,6,2); c.fillRect(32,28,6,2);
-  } else if(ev.title.includes('节日')||ev.title.includes('纪念')){
+  } else if(ev.icon === 'sunrise'||ev.icon === 'sunrise'){
     c.fillStyle = C.sunCore; c.fillRect(16,8,16,16);
     c.fillStyle = C.yellow; c.fillRect(20,4,8,8);
     c.fillStyle = C.metal; c.fillRect(8,24,32,8);
     c.fillStyle = C.red; c.fillRect(12,28,4,4); c.fillRect(24,28,8,4); c.fillRect(36,28,2,4);
     c.fillStyle = C.earth; c.fillRect(8,32,32,4);
     c.fillStyle = '#fff'; c.fillRect(18,6,4,2); c.fillRect(28,28,2,2);
-  } else if(ev.title.includes('泄漏')||ev.title.includes('裂缝')){
+  } else if(ev.icon === 'failure'||ev.icon === 'failure'){
     c.fillStyle = C.metalDark; c.fillRect(8,14,32,20);
     c.fillStyle = C.glass; c.fillRect(14,20,6,8); c.fillRect(28,20,6,8);
     c.fillStyle = C.glassLight;
@@ -2065,7 +2260,7 @@ function drawEventIcon(c, ev){
     c.fillStyle = C.red; c.fillRect(18,22,2,2); c.fillRect(30,20,3,3);
     c.fillStyle = C.bad;
     for(let j=0;j<6;j++){ c.fillRect(16+j*3,30+j%2*2,1,1); }
-  } else if(ev.title.includes('援助')||ev.title.includes('补给')||ev.title.includes('空投')){
+  } else if(ev.icon === 'aid'||ev.icon === 'aid'||ev.icon === 'aid'){
     c.fillStyle = C.earth; c.fillRect(6,6,20,12);
     c.fillStyle = C.earthLand; c.fillRect(8,8,8,4); c.fillRect(20,10,4,4);
     c.fillStyle = C.earthCloud; c.fillRect(10,6,6,2);
@@ -2074,7 +2269,7 @@ function drawEventIcon(c, ev){
     c.fillStyle = C.red; c.fillRect(16,38,4,2); c.fillRect(28,38,4,2);
     c.fillStyle = C.green; c.fillRect(8,32,6,4); c.fillRect(36,30,4,6);
     c.fillStyle = '#fff'; c.fillRect(22,28,2,1); c.fillRect(26,36,2,1);
-  } else if(ev.title.includes('射线')||ev.title.includes('电子')){
+  } else if(ev.icon === 'research'||ev.icon === 'research'){
     c.fillStyle = C.glass; c.fillRect(8,16,32,16);
     c.fillStyle = C.glassLight; c.fillRect(10,18,6,4);
     c.fillStyle = C.green; c.fillRect(20,20,4,4); c.fillRect(30,20,4,4);
@@ -2083,7 +2278,7 @@ function drawEventIcon(c, ev){
     c.fillStyle = C.red; c.fillRect(14,22,2,2); c.fillRect(34,22,2,2);
     c.fillStyle = '#1a1a28'; c.fillRect(18,14,12,4);
     c.fillStyle = C.bad; for(let j=0;j<4;j++){ c.fillRect(20+j*4,15,1,2); }
-  } else if(ev.title.includes('丰收')||ev.title.includes('作物')){
+  } else if(ev.icon === 'aid'||ev.icon === 'aid'){
     c.fillStyle = C.greenDark; c.fillRect(8,24,32,12);
     c.fillStyle = C.green; c.fillRect(10,20,28,6);
     c.fillStyle = C.yellow; c.fillRect(14,16,6,6); c.fillRect(28,14,6,8);
@@ -2091,7 +2286,7 @@ function drawEventIcon(c, ev){
     c.fillStyle = C.green; for(let j=0;j<5;j++){ c.fillRect(4+j*4,28,2,8); c.fillRect(38-j*4,28,2,8); }
     c.fillStyle = C.sunCore; c.fillRect(18,8,12,10);
     c.fillStyle = C.yellow; c.fillRect(22,4,4,6);
-  } else if(ev.title.includes('交流')||ev.title.includes('分享')){
+  } else if(ev.icon === 'research'||ev.icon === 'research'){
     c.fillStyle = C.metal; c.fillRect(6,6,20,16);
     c.fillStyle = C.metalLight; c.fillRect(8,8,16,3);
     c.fillStyle = C.glassDark; c.fillRect(10,14,12,4);
@@ -2100,14 +2295,14 @@ function drawEventIcon(c, ev){
     c.fillStyle = C.visor; c.fillRect(22,26,4,3); c.fillRect(34,30,4,3);
     c.fillStyle = C.yellow; c.fillRect(28,14,10,6); c.fillRect(30,16,6,2);
     c.fillStyle = C.good; c.fillRect(30,8,8,4); c.fillRect(32,6,4,2);
-  } else if(ev.title.includes('短缺')||ev.title.includes('延误')||ev.title.includes('中断')){
+  } else if(ev.icon === 'failure'||ev.icon === 'failure'||ev.icon === 'failure'){
     c.fillStyle = C.metalDark; c.fillRect(6,10,36,28);
     c.fillStyle = C.metal; c.fillRect(8,12,32,4);
     c.fillStyle = C.red; c.fillRect(12,22,4,4); c.fillRect(22,20,4,6); c.fillRect(32,22,4,4);
     c.fillStyle = C.bad; c.fillRect(8,30,32,4); c.fillRect(8,34,32,2);
     for(let j=0;j<6;j++){ c.fillRect(10+j*5,26,2,2); }
     c.fillStyle = '#1a1a28'; c.fillRect(14,16,20,2);
-  } else if(ev.title.includes('竞赛')||ev.title.includes('大赛')){
+  } else if(ev.icon === 'research'||ev.icon === 'research'){
     c.fillStyle = C.glassDark; c.fillRect(6,10,36,24);
     c.fillStyle = C.glass; c.fillRect(8,12,32,20);
     c.fillStyle = C.green; c.fillRect(12,16,8,4); c.fillRect(28,16,8,4);
@@ -2115,7 +2310,7 @@ function drawEventIcon(c, ev){
     c.fillStyle = C.sunCore; c.fillRect(22,2,4,4);
     c.fillStyle = '#fff'; c.fillRect(14,18,2,1); c.fillRect(30,18,2,1);
     c.fillStyle = C.red; c.fillRect(18,24,4,4); c.fillRect(26,24,4,4); c.fillRect(22,28,4,2);
-  } else if(ev.title.includes('医疗')||ev.title.includes('急病')){
+  } else if(ev.icon === 'failure'||ev.icon === 'failure'){
     c.fillStyle = C.metal; c.fillRect(8,8,32,32);
     c.fillStyle = C.red; c.fillRect(18,12,12,2); c.fillRect(23,7,2,12);
     c.fillStyle = C.glassDark; c.fillRect(12,18,24,16);
@@ -2124,7 +2319,7 @@ function drawEventIcon(c, ev){
     c.fillStyle = C.bad; c.fillRect(14,26,14,4);
     c.fillStyle = '#1a1a28'; c.fillRect(16,30,10,2);
     c.fillStyle = '#fff'; c.fillRect(24,22,2,1);
-  } else if(ev.title.includes('预警')||ev.title.includes('规避')){
+  } else if(ev.icon === 'meteor'||ev.icon === 'meteor'){
     c.fillStyle = C.metal; c.fillRect(8,12,32,12);
     c.fillStyle = C.glassDark; c.fillRect(12,16,24,4);
     c.fillStyle = C.green; c.fillRect(14,18,4,2); c.fillRect(22,18,6,2); c.fillRect(30,18,4,2);
@@ -2189,7 +2384,7 @@ function updateHUD(){
     drawResIcon(cv.getContext('2d'), RES[ri].key);
   });
   // 日期
-  document.getElementById('daytxt').textContent = '第'+G.day+'日';
+  document.getElementById('daytxt').textContent = TF('第%s日', G.day);
   const hour = Math.floor(G.time*24);
   const min = Math.floor((G.time*24 - hour)*60);
   document.getElementById('timetxt').textContent = String(hour).padStart(2,'0')+':'+String(min).padStart(2,'0');
@@ -2217,7 +2412,7 @@ function hideOverlay(){
 }
 
 function showBuildMenu(){
-  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>建造</h2><div class="blist">';
+  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>'+T('建造')+'</h2><div class="blist">';
   for(const key in BDEF){
     const def = BDEF[key];
     const unlocked = def.unlock || G.unlocked[def.tech];
@@ -2247,11 +2442,11 @@ function showBuildMenu(){
       const def = BDEF[key];
       let can = true;
       for(const k in def.cost) if(G.res[k] < def.cost[k]) can = false;
-      if(!can){ toast('资源不足！', 'bad'); Sound.error(); return; }
+      if(!can){ toast(T('资源不足！'), 'bad'); Sound.error(); return; }
       G.placeMode = key;
       hideOverlay();
       document.getElementById('btn-build').classList.add('on');
-      setInfo('选中：'+def.name+'。点击地图放置，按建造键取消。');
+      setInfo(T('选中：')+def.name+T('。点击地图放置，按建造键取消。'));
       Sound.click();
     };
   });
@@ -2273,8 +2468,8 @@ function drawSpriteToCanvas(c, type){
 }
 
 function showResearchMenu(){
-  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>科研中心</h2>';
-  html += '<div style="text-align:center;margin-bottom:8px;font-size:10px;color:var(--c-research)">科研点: <b style="color:var(--text)">'+Math.floor(G.res.research)+'</b></div>';
+  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>'+T('科研中心')+'</h2>';
+  html += '<div style="text-align:center;margin-bottom:8px;font-size:10px;color:var(--c-research)">'+T('科研点')+': <b style="color:var(--text)">'+Math.floor(G.res.research)+'</b></div>';
   html += '<div class="rlist">';
   for(const key in RDEF){
     const r = RDEF[key];
@@ -2285,9 +2480,9 @@ function showResearchMenu(){
     else if(can) cls = 'afford';
     html += '<div class="rcard '+cls+'" data-res="'+key+'">';
     html += '<div class="info"><div class="nm">'+r.name+'</div>';
-    html += '<div class="cost">消耗: '+r.cost+' 科研</div>';
+    html += '<div class="cost">'+T('消耗')+': '+r.cost+' '+T('科研点')+'</div>';
     html += '<div class="eff">'+r.desc+'</div>';
-    if(done) html += '<div class="st" style="color:var(--good)">✓ 已研发</div>';
+    if(done) html += '<div class="st" style="color:var(--good)">✓ '+T('已研发')+'</div>';
     html += '</div></div>';
   }
   html += '</div>';
@@ -2297,7 +2492,7 @@ function showResearchMenu(){
       const key = card.dataset.res;
       const r = RDEF[key];
       if(G.researchDone[key]) return;
-      if(G.res.research < r.cost){ toast('科研点不足！', 'bad'); Sound.error(); return; }
+      if(G.res.research < r.cost){ toast(T('科研点不足！'), 'bad'); Sound.error(); return; }
       G.res.research -= r.cost;
       G.researchDone[key] = true;
       if(r.unlock) G.unlocked[r.unlock] = true;
@@ -2307,7 +2502,7 @@ function showResearchMenu(){
           for(const b of G.grid) if(b && b.type==='habitat') G.colonistCap += r.boost.habitatCap;
         }
       }
-      toast('研发成功：'+r.name, 'good');
+      toast(T('研发成功：')+r.name, 'good');
       Sound.success();
       showResearchMenu();
     };
@@ -2315,24 +2510,24 @@ function showResearchMenu(){
 }
 
 function showCrewMenu(){
-  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>船员管理</h2>';
-  html += '<div style="text-align:center;margin-bottom:8px;font-size:10px;color:var(--dim)">船员: <b style="color:var(--text)">'+G.crew.length+'</b> / <b style="color:var(--text)">'+(G.colonistCap||0)+'</b></div>';
+  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>'+T('船员管理')+'</h2>';
+  html += '<div style="text-align:center;margin-bottom:8px;font-size:10px;color:var(--dim)">'+T('船员')+': <b style="color:var(--text)">'+G.crew.length+'</b> / <b style="color:var(--text)">'+(G.colonistCap||0)+'</b></div>';
   // 招募
   let recruitCost = 50 + G.crew.length*20;
   if(G.researchDone.recruit) recruitCost = Math.floor(recruitCost * 0.7);
   const canRecruit = G.res.credit >= recruitCost && G.crew.length < (G.colonistCap||0);
-  html += '<button class="mbtn" id="recruit-btn" '+(canRecruit?'':'disabled')+'>招募新船员 ('+recruitCost+' 金币)</button>';
+  html += '<button class="mbtn" id="recruit-btn" '+(canRecruit?'':'disabled')+'>'+T('招募新船员')+' ('+recruitCost+' '+T('金币')+')</button>';
   html += '<div class="clist" style="margin-top:8px">';
   for(const c of G.crew){
-    const job = c.job!=null && G.grid[c.job] ? BDEF[G.grid[c.job].type].name : '空闲';
+    const job = c.job!=null && G.grid[c.job] ? BDEF[G.grid[c.job].type].name : T('空闲');
     html += '<div class="ccard">';
     html += '<canvas width="28" height="28" data-crew="'+c.id+'"></canvas>';
     html += '<div class="info"><div class="nm">'+c.name+'</div>';
-    html += '<div class="stat">采矿<b>'+c.mining+'</b> 务农<b>'+c.farming+'</b> 科研<b>'+c.science+'</b> 工程<b>'+c.eng+'</b></div>';
+    html += '<div class="stat">'+T('采矿')+'<b>'+c.mining+'</b> '+T('务农')+'<b>'+c.farming+'</b> '+T('科研')+'<b>'+c.science+'</b> '+T('工程')+'<b>'+c.eng+'</b></div>';
     if(c.job!=null){
-      html += '<div class="asg">职业: '+job+' <button class="mbtn" style="display:inline;width:auto;padding:2px 6px;font-size:9px;margin-top:0" data-unassign="'+c.id+'">取消分配</button></div>';
+      html += '<div class="asg">'+T('职业')+': '+job+' <button class="mbtn" style="display:inline;width:auto;padding:2px 6px;font-size:9px;margin-top:0" data-unassign="'+c.id+'">'+T('取消分配')+'</button></div>';
     } else {
-      html += '<div class="asg">职业: '+job+'</div>';
+      html += '<div class="asg">'+T('职业')+': '+job+'</div>';
     }
     html += '</div></div>';
   }
@@ -2353,14 +2548,14 @@ function showCrewMenu(){
   });
   document.getElementById('recruit-btn').onclick = ()=>{
     if(G.res.credit < recruitCost) return;
-    if(G.crew.length >= (G.colonistCap||0)){ toast('居住舱不足！', 'bad'); Sound.error(); return; }
+    if(G.crew.length >= (G.colonistCap||0)){ toast(T('居住舱不足！'), 'bad'); Sound.error(); return; }
     G.res.credit -= recruitCost;
-    const names = ['伽马','德尔塔','艾普西龙','泽塔','伊塔','西塔','艾欧塔','卡帕','拉姆','缪'];
+    const names = [T('伽马'),T('德尔塔'),T('艾普西龙'),T('泽塔'),T('伊塔'),T('西塔'),T('艾欧塔'),T('卡帕'),T('拉姆'),T('缪')];
     const n = names[Math.floor(Math.random()*names.length)];
     const stats = {mining:1+Math.floor(Math.random()*4), farming:1+Math.floor(Math.random()*4), science:1+Math.floor(Math.random()*4), eng:1+Math.floor(Math.random()*4)};
     addCrew(n+' '+Math.floor(Math.random()*100), stats);
     G.stats.totalRecruited++;
-    toast('新船员加入！', 'good');
+    toast(T('新船员加入！'), 'good');
     Sound.success();
     showCrewMenu();
   };
@@ -2376,7 +2571,7 @@ function showCrewMenu(){
           if(idx>=0) b.crew.splice(idx,1);
         }
         c.job = null;
-        toast(c.name+' 已取消分配', 'good');
+        toast(c.name+T(' 已取消分配'), 'good');
         Sound.click();
         showCrewMenu();
       }
@@ -2386,7 +2581,7 @@ function showCrewMenu(){
 
 function showExpiryWarning(loss){
   const box = document.getElementById('evbox');
-  box.innerHTML = '<h3 style="color:var(--bad)">⚠ 积分过期警告</h3><canvas id="evcanvas" width="48" height="48"></canvas><p>你的积分已开始过期！<br>今日损失了 <b>'+loss+'</b> 积分。<br>研发<b>积分保护</b>科技可阻止积分过期。</p><button class="evbtn" id="ev-ok">了解</button>';
+  box.innerHTML = '<h3 style="color:var(--bad)">⚠ 积分过期警告</h3><canvas id="evcanvas" width="48" height="48"></canvas><p>你的积分已开始过期！<br>今日损失了 <b>'+loss+'</b> 积分。<br>研发<b>积分保护</b>科技可阻止积分过期。</p><button class="evbtn" id="ev-ok">'+T('了解')+'</button>';
   document.getElementById('eventpop').classList.add('on');
   const ec = document.getElementById('evcanvas');
   if(ec){
@@ -2408,36 +2603,36 @@ function showExpiryWarning(loss){
 }
 
 function showMenu(){
-  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>菜单</h2>';
+  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>'+T('菜单')+'</h2>';
   html += '<div class="mlist">';
-  html += '<div class="mitem"><div class="t">游戏状态</div><div class="d">第 <b>'+G.day+'</b> 日 · 船员 <b>'+G.crew.length+'</b> 人 · 建筑 <b>'+countBuildings()+'</b> 座 · 科技 <b>'+Object.keys(G.researchDone).length+'</b> 项 · 成就 <b>'+G.achievements.size+'</b> 个 · 事件 <b>'+G.stats.totalEvents+'</b> 次 · 招募 <b>'+G.stats.totalRecruited+'</b> 人</div></div>';
+  html += '<div class="mitem"><div class="t">'+T('游戏状态')+'</div><div class="d">'+T('第')+' <b>'+G.day+'</b> '+T('日')+' · '+T('船员')+' <b>'+G.crew.length+'</b> '+T('人')+' · '+T('建筑')+' <b>'+countBuildings()+'</b> '+T('座')+' · '+T('科技')+' <b>'+Object.keys(G.researchDone).length+'</b> '+T('项')+' · '+T('成就')+' <b>'+G.achievements.size+'</b> '+T('个')+' · '+T('事件')+' <b>'+G.stats.totalEvents+'</b> '+T('次')+' · '+T('招募')+' <b>'+G.stats.totalRecruited+'</b> '+T('人')+'</div></div>';
   // 产量统计
-  html += '<div class="mitem"><div class="t">资源动态</div><div class="d" id="res-stats">计算中...</div></div>';
-  html += '<div class="mitem"><div class="t">音效</div><div class="d">当前: '+(G.soundOn?'开启':'关闭')+'</div><button class="mbtn" id="sound-toggle">'+(G.soundOn?'关闭音效':'开启音效')+'</button></div>';
-  html += '<div class="mitem"><div class="t">存档</div><div class="d">保存进度到本地</div><button class="mbtn" id="save-btn">保存游戏</button><button class="mbtn" id="load-btn">读取存档</button></div>';
+  html += '<div class="mitem"><div class="t">'+T('资源动态')+'</div><div class="d" id="res-stats">'+T('计算中...')+'</div></div>';
+  html += '<div class="mitem"><div class="t">'+T('音效')+'</div><div class="d">'+T('当前')+': '+(G.soundOn?T('开启'):T('关闭'))+'</div><button class="mbtn" id="sound-toggle">'+(G.soundOn?T('关闭音效'):T('开启音效'))+'</button></div>';
+  html += '<div class="mitem"><div class="t">'+T('存档')+'</div><div class="d">'+T('保存进度到本地')+'</div><button class="mbtn" id="save-btn">'+T('保存游戏')+'</button><button class="mbtn" id="load-btn">'+T('读取存档')+'</button></div>';
   html += '<div class="mitem"><div class="t">成就 ('+G.achievements.size+'/8)</div><div class="d">';
   const achs = [
-    ['crew5','小队成立','5名船员'],
-    ['crew10','殖民地','10名船员'],
-    ['crew20','月球都市','20名船员'],
-    ['day10','十日生存','第10天'],
-    ['day30','月球老兵','第30天'],
-    ['day50','月球传奇','第50天'],
-    ['tech3','科研先锋','3项科技'],
-    ['tech7','科技大师','7项科技'],
-    ['tech12','科学家','12项科技'],
-    ['rich','富甲月球','500金币'],
-    ['rich2','月球大亨','1500金币'],
-    ['core','核心启动','建造月球核心'],
-    ['build20','繁荣殖民地','20座建筑'],
-    ['medbay','医疗保障','建造医务室'],
-    ['radar','安全第一','建造雷达站'],
+    ['crew5',T('小队成立'),T('5名船员')],
+    ['crew10',T('殖民地'),T('10名船员')],
+    ['crew20',T('月球都市'),T('20名船员')],
+    ['day10',T('十日生存'),T('第10天')],
+    ['day30',T('月球老兵'),T('第30天')],
+    ['day50',T('月球传奇'),T('第50天')],
+    ['tech3',T('科研先锋'),T('3项科技')],
+    ['tech7',T('科技大师'),T('7项科技')],
+    ['tech12',T('科学家'),T('12项科技')],
+    ['rich',T('富甲月球'),T('500金币')],
+    ['rich2',T('月球大亨'),T('1500金币')],
+    ['core',T('核心启动'),T('建造月球核心')],
+    ['build20',T('繁荣殖民地'),T('20座建筑')],
+    ['medbay',T('医疗保障'),T('建造医务室')],
+    ['radar',T('安全第一'),T('建造雷达站')],
   ];
   for(const [id,name,desc] of achs){
     html += (G.achievements.has(id)?'✓':'○')+' '+name+' ('+desc+')<br>';
   }
   html += '</div></div>';
-  html += '<div class="mitem"><div class="t">重新开始</div><div class="d">清除当前进度，重新开始游戏</div><button class="mbtn danger" id="reset-btn">重新开始</button></div>';
+  html += '<div class="mitem"><div class="t">'+T('重新开始')+'</div><div class="d">清除当前进度，重新开始游戏</div><button class="mbtn danger" id="reset-btn">'+T('重新开始')+'</button></div>';
   html += '</div>';
   showOverlay(html);
   // 计算资源动态
@@ -2476,7 +2671,7 @@ function showMenu(){
     const v = rates[r.key];
     const sign = v >= 0 ? '+' : '';
     const color = v >= 0 ? 'var(--good)' : 'var(--bad)';
-    rateHtml += r.name+': <b style="color:'+color+'">'+sign+v.toFixed(1)+'/s</b> · 当前: <b>'+Math.floor(G.res[r.key])+'</b><br>';
+    rateHtml += r.name+': <b style="color:'+color+'">'+sign+v.toFixed(1)+'/s</b> · '+T('当前')+': <b>'+Math.floor(G.res[r.key])+'</b><br>';
   }
   document.getElementById('res-stats').innerHTML = rateHtml;
   document.getElementById('sound-toggle').onclick = ()=>{
@@ -2486,11 +2681,11 @@ function showMenu(){
   };
   document.getElementById('save-btn').onclick = ()=>{
     saveGame();
-    toast('已保存', 'good');
+    toast(T('已保存'), 'good');
   };
   document.getElementById('load-btn').onclick = ()=>{
-    if(loadGame()){ toast('已读取', 'good'); hideOverlay(); }
-    else toast('无存档', 'bad');
+    if(loadGame()){ toast(T('已读取'), 'good'); hideOverlay(); }
+    else toast(T('无存档'), 'bad');
   };
   document.getElementById('reset-btn').onclick = ()=>{
     // 用自定义确认代替 confirm()
@@ -2499,15 +2694,15 @@ function showMenu(){
       localStorage.removeItem('lunarColony');
       newGame();
       hideOverlay();
-      toast('新游戏开始', 'good');
+      toast(T('新游戏开始'), 'good');
     } else {
       btn.dataset.confirmed = '1';
-      btn.textContent = '再次点击确认重置';
+      btn.textContent = T('再次点击确认重置');
       btn.style.background = 'var(--bad)';
       btn.style.color = '#fff';
       setTimeout(()=>{
         btn.dataset.confirmed = '0';
-        btn.textContent = '重新开始';
+        btn.textContent = T('重新开始');
         btn.style.background = '';
         btn.style.color = '';
       }, 3000);
@@ -2532,28 +2727,28 @@ function showSelInfo(idx){
   html += '<div class="sd">';
   if(def.prod){
     for(const k in def.prod){
-      html += '产 '+def.prod[k].toFixed(1)+'/秒 '+RES.find(r=>r.key===k).name+' ';
+      html += T('产 ')+def.prod[k].toFixed(1)+T('/秒 ')+RES.find(r=>r.key===k).name+' ';
     }
   }
   if(def.use){
     for(const k in def.use){
-      html += '耗 '+def.use[k].toFixed(2)+'/秒 '+RES.find(r=>r.key===k).name+' ';
+      html += T('耗 ')+def.use[k].toFixed(2)+T('/秒 ')+RES.find(r=>r.key===k).name+' ';
     }
   }
   if(def.needCrew){
-    html += '<br>分配船员: '+b.crew.length+' (需至少1人)';
+    html += '<br>'+T('分配船员')+': '+b.crew.length+T('（需至少1人）');
     if(b.crew.length > 0){
-      html += ' <button class="mbtn" style="display:inline;width:auto;padding:2px 6px;font-size:9px;margin-top:0" data-unassign-all="'+idx+'">全部撤回</button>';
+      html += ' <button class="mbtn" style="display:inline;width:auto;padding:2px 6px;font-size:9px;margin-top:0" data-unassign-all="'+idx+'">'+T('全部撤回')+'</button>';
     }
   }
-  if(def.cap && def.cap.colonist) html += '<br>提供居住: +'+def.cap.colonist;
+  if(def.cap && def.cap.colonist) html += '<br>'+T('提供居住')+': +'+def.cap.colonist;
   html += '</div>';
   if(def.needCrew){
-    html += '<div class="act"><button class="asg" data-idx="'+idx+'">分配船员</button><button class="del" data-del="'+idx+'">拆除</button></div>';
+    html += '<div class="act"><button class="asg" data-idx="'+idx+'">'+T('分配船员')+'</button><button class="del" data-del="'+idx+'">'+T('拆除')+'</button></div>';
   } else if(b.type==='tradepost'){
-    html += '<div class="act"><button class="asg" data-trade-open="'+idx+'" style="background:linear-gradient(180deg,#5a4015,#3a2810);border-color:var(--accent);color:var(--accent)">贸易</button><button class="del" data-del="'+idx+'">拆除</button></div>';
+    html += '<div class="act"><button class="asg" data-trade-open="'+idx+'" style="background:linear-gradient(180deg,#5a4015,#3a2810);border-color:var(--accent);color:var(--accent)">'+T('贸易')+'</button><button class="del" data-del="'+idx+'">'+T('拆除')+'</button></div>';
   } else {
-    html += '<div class="act"><button class="del" data-del="'+idx+'">拆除</button></div>';
+    html += '<div class="act"><button class="del" data-del="'+idx+'">'+T('拆除')+'</button></div>';
   }
   const el = document.getElementById('selinfo');
   el.innerHTML = html;
@@ -2571,7 +2766,7 @@ function showSelInfo(idx){
       if(c) c.job = null;
     }
     b.crew = [];
-    toast('已撤回全部船员', 'good');
+    toast(T('已撤回全部船员'), 'good');
     Sound.click();
     showSelInfo(idx);
   };
@@ -2582,11 +2777,11 @@ function assignCrew(idx){
   if(!b) return;
   // 找一个空闲船员
   const free = G.crew.filter(c=>c.job==null);
-  if(free.length===0){ toast('没有空闲船员！', 'bad'); Sound.error(); return; }
+  if(free.length===0){ toast(T('没有空闲船员！'), 'bad'); Sound.error(); return; }
   const c = free[0];
   c.job = idx;
   b.crew.push(c.id);
-  toast(c.name+' 已分配', 'good');
+  toast(c.name+T(' 已分配'), 'good');
   Sound.click();
   showSelInfo(idx);
 }
@@ -2605,7 +2800,7 @@ function demolish(idx){
     // 如果船员数超过上限，移除多余的
     while(G.crew.length > G.colonistCap && G.crew.length > 0){
       const removed = G.crew.pop();
-      toast(removed.name+' 因居住舱不足离开了殖民地', 'bad');
+      toast(removed.name+T(' 因居住舱不足离开了殖民地'), 'bad');
     }
   }
   if(def.capAdd){ for(const k in def.capAdd) G.cap[k] -= def.capAdd[k]; }
@@ -2618,7 +2813,7 @@ function demolish(idx){
   document.getElementById('selinfo').classList.remove('on');
   spawnParticles((b.gx-G.scrollX)*TILE+TILE/2, (b.gy-G.scrollY)*TILE+TILE/2, 'build');
   Sound.error();
-  toast('已拆除（返还50%资源）', 'good');
+  toast(T('已拆除（返还50%资源）'), 'good');
 }
 
 // ---- 存档 ----
@@ -2647,7 +2842,7 @@ function showGameOver(){
   G.gameOver = true;
   G.paused = true;
   const box = document.getElementById('evbox');
-  box.innerHTML = '<h3 style="color:var(--bad)">★ 殖民地覆灭 ★</h3><canvas id="evcanvas" width="48" height="48"></canvas><p>资源耗尽，士气崩溃。<br>殖民地存活了 <b>'+G.day+'</b> 天。<br>船员：<b>'+G.crew.length+'</b>人 · 建筑：<b>'+countBuildings()+'</b>座 · 科技：<b>'+Object.keys(G.researchDone).length+'</b>项</p><button class="evbtn" id="ev-ok" style="background:var(--bad)">重新开始</button>';
+  box.innerHTML = '<h3 style="color:var(--bad)">'+T('★ 殖民地覆灭 ★')+'</h3><canvas id="evcanvas" width="48" height="48"></canvas><p>'+T('资源耗尽，士气崩溃。')+'<br>'+T('殖民地存活了')+' <b>'+G.day+'</b> '+T('天。')+'<br>'+T('船员：')+'<b>'+G.crew.length+'</b>'+T('人')+' · '+T('建筑：')+'<b>'+countBuildings()+'</b>'+T('座')+' · '+T('科技：')+'<b>'+Object.keys(G.researchDone).length+'</b>'+T('项')+'</p><button class="evbtn" id="ev-ok" style="background:var(--bad)">'+T('重新开始')+'</button>';
   document.getElementById('eventpop').classList.add('on');
   const ec = document.getElementById('evcanvas');
   if(ec){
@@ -2663,7 +2858,7 @@ function showGameOver(){
     localStorage.removeItem('lunarColony');
     newGame();
     hideOverlay();
-    setInfo('新游戏开始。点击 <b>建造</b> 开始建设。');
+    setInfo(T('新游戏开始。点击 <b>建造</b> 开始建设。'));
   };
   Sound.alert();
 }
@@ -2672,7 +2867,7 @@ function showGameOver(){
 function showWin(){
   G.paused = true;
   const box = document.getElementById('evbox');
-  box.innerHTML = '<h3>★ 胜利！★</h3><canvas id="evcanvas" width="48" height="48"></canvas><p>恭喜！你成功建造了月球核心，并拥有20名船员。<br>月球殖民地正式成为月球都市！<br>用时：'+G.day+'天</p><button class="evbtn" id="ev-ok">继续游戏</button>';
+  box.innerHTML = '<h3>★ 胜利！★</h3><canvas id="evcanvas" width="48" height="48"></canvas><p>恭喜！你成功建造了月球核心，并拥有20名船员。<br>月球殖民地正式成为月球都市！<br>用时：'+G.day+'天</p><button class="evbtn" id="ev-ok">'+T('继续游戏')+'</button>';
   document.getElementById('eventpop').classList.add('on');
   const ec = document.getElementById('evcanvas');
   if(ec){
@@ -2801,12 +2996,12 @@ function onTap(g){
       if(!can){
         G.placeMode = null;
         document.getElementById('btn-build').classList.remove('on');
-        setInfo('资源不足，已退出建造模式。');
+        setInfo(T('资源不足，已退出建造模式。'));
       } else {
-        setInfo('继续点击放置 '+def.name+'，或按建造键退出。');
+        setInfo(T('继续点击放置 ')+def.name+T('，或按建造键退出。'));
       }
     } else {
-      toast('无法放置在此处', 'bad');
+      toast(T('无法放置在此处'), 'bad');
       Sound.error();
     }
   } else {
@@ -2828,7 +3023,7 @@ document.getElementById('btn-build').onclick = ()=>{
   if(G.placeMode){
     G.placeMode = null;
     document.getElementById('btn-build').classList.remove('on');
-    setInfo('已取消建造模式。');
+    setInfo(T('已取消建造模式。'));
   } else {
     showBuildMenu();
   }
@@ -2906,7 +3101,7 @@ document.getElementById('start-btn').onclick = ()=>{
   document.getElementById('title').style.display = 'none';
   newGame();
   resizeCanvas();
-  setInfo('先建 <b>太阳能板</b> 和 <b>制氧机</b> 维持生存。建 <b>矿场</b>、<b>温室</b>、<b>实验室</b> 发展。<b>通讯塔</b> 触发事件后研发解锁更多建筑！');
+  setInfo(T('先建 <b>太阳能板</b> 和 <b>制氧机</b> 维持生存。建 <b>矿场</b>、<b>温室</b>、<b>实验室</b> 发展。<b>通讯塔</b> 触发事件后研发解锁更多建筑！'));
 };
 
 // ---- 主循环 ----
@@ -2932,6 +3127,41 @@ requestAnimationFrame(loop);
 document.body.addEventListener('touchmove', (e)=>e.preventDefault(), {passive:false});
 document.addEventListener('gesturestart', (e)=>e.preventDefault());
 
+
+// Language switch handler
+document.querySelectorAll('.lang-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    setLang(btn.dataset.lang);
+    document.querySelectorAll('.lang-btn').forEach(b=>b.style.background='#1a2030');
+    btn.style.background='#26324a';
+    const h1 = document.getElementById('title-h1');
+    if(h1) h1.textContent = T('月球基地');
+    const tip = document.getElementById('title-tip');
+    if(tip) tip.innerHTML = T('在荒芜的月球上建立繁荣殖民地')+'<br>'+T('管理')+' <b>7'+T('种资源')+'</b> · '+T('招募')+' <b>'+T('船员')+'</b> · '+T('研发')+' <b>24'+T('项科技')+'</b><br>'+T('建造')+' <b>17'+T('种建筑')+'</b> · '+T('应对')+' <b>23'+T('种事件')+'</b> · '+T('建造')+' <b>'+T('月球核心')+'</b> '+T('达成胜利');
+    const sb = document.getElementById('start-btn');
+    if(sb){const sl=sb.querySelector('.btn-label');if(sl)sl.textContent=T('开始建造');}
+    const ml = document.getElementById('morale-label');
+    if(ml) ml.textContent = T('士气');
+    document.querySelectorAll('.btn-label').forEach((el,i)=>{
+    const labels = [T('建造'),T('科研'),T('船员'),T('菜单')];
+    if(labels[i]) el.textContent = labels[i];
+  });
+    const sp = document.getElementById('pause-label');
+    if(sp) sp.textContent = T('‖ 暂停');
+    const ib = document.getElementById('infobar');
+    if(ib) ib.innerHTML = T('欢迎来到月球！点击<b>建造</b> 开始你的殖民地。目标：建造<b>月球核心</b> 并拥有 20 名船员。注意：第 5天起积分将开始过期！');
+    const dt = document.getElementById('daytxt');
+    if(dt) dt.textContent = TF('第%s日', G.day);
+  });
+});
+const _initLangBtn = document.querySelector('.lang-btn[data-lang="'+I18N.lang+'"]');
+if(_initLangBtn){
+  _initLangBtn.style.background='#26324a';
+  // Trigger initial translation if not Chinese
+  if(I18N.lang !== 'zh'){
+    _initLangBtn.click();
+  }
+}
 </script>
 </body>
 </html>

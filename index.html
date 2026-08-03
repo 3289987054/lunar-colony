@@ -583,6 +583,9 @@ function newGame(){
     constructAnim:[], // {idx, t}
     achievements:new Set(),
     soundOn:true,
+    volume:0.7,
+    musicOn:false,
+    lastAchieve:0,
     tradeOffers:[],
     gameOver:false, won:false,
     shake:0,
@@ -1686,7 +1689,7 @@ function checkAchievements(){
     if(!G.achievements.has(id)){
       G.achievements.add(id);
       toast(T('成就解锁：')+name, 'good');
-      Sound.success();
+      Sound.achieve();
     }
   };
   if(G.crew.length >= 5) add('crew5', T('小队成立'));
@@ -2341,18 +2344,72 @@ const Sound = {
   actx: null,
   init(){
     if(this.actx) return;
-    try{ this.actx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){}
+    try{
+      this.actx = new (window.AudioContext||window.webkitAudioContext)();
+      this.master = this.actx.createGain();
+      this.master.gain.value = (G.volume!=null?G.volume:0.7);
+      this.master.connect(this.actx.destination);
+      this.bgmNodes = null;
+    }catch(e){}
+  },
+  setVolume(v){
+    G.volume = v;
+    try{ localStorage.setItem('lunarColonyVol', String(v)); }catch(e){}
+    if(this.master && this.actx) this.master.gain.value = v;
+  },
+  bgmStart(){
+    if(!this.actx || this.bgmNodes) return;
+    const ctx = this.actx;
+    const o1 = ctx.createOscillator(); o1.type = 'sine'; o1.frequency.value = 110;
+    const o2 = ctx.createOscillator(); o2.type = 'sine'; o2.frequency.value = 110.5;
+    const lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 400; lp.Q.value = 0.7;
+    const g = ctx.createGain(); g.gain.value = 0.04;
+    o1.connect(lp); o2.connect(lp); lp.connect(g); g.connect(this.master);
+    o1.start(); o2.start();
+    const lfo = ctx.createOscillator(); lfo.type = 'sine'; lfo.frequency.value = 0.07;
+    const lfoG = ctx.createGain(); lfoG.gain.value = 200;
+    lfo.connect(lfoG); lfoG.connect(lp.frequency);
+    lfo.start();
+    this.bgmNodes = { o1, o2, lfo, g, chimeInterval: setInterval(()=>{
+      if(!this.bgmNodes || !G.musicOn) return;
+      const notes = [523, 659, 784, 988, 1175];
+      const f = notes[Math.floor(Math.random()*notes.length)];
+      const co = ctx.createOscillator(); co.type='triangle'; co.frequency.value=f;
+      const cg = ctx.createGain(); cg.gain.value=0;
+      co.connect(cg); cg.connect(this.master);
+      const t = ctx.currentTime;
+      cg.gain.setValueAtTime(0, t);
+      cg.gain.linearRampToValueAtTime(0.025, t+0.5);
+      cg.gain.exponentialRampToValueAtTime(0.001, t+3);
+      co.start(t); co.stop(t+3.2);
+    }, 9000) };
+  },
+  bgmStop(){
+    if(!this.bgmNodes) return;
+    try{
+      clearInterval(this.bgmNodes.chimeInterval);
+      this.bgmNodes.o1.stop();
+      this.bgmNodes.o2.stop();
+      this.bgmNodes.lfo.stop();
+    }catch(e){}
+    this.bgmNodes = null;
+  },
+  bgmToggle(on){
+    G.musicOn = on;
+    try{ localStorage.setItem('lunarColonyMusic', on?'1':'0'); }catch(e){}
+    if(on) this.bgmStart(); else this.bgmStop();
   },
   beep(freq, dur, type='square', vol=0.08){
     if(!G.soundOn || !this.actx) return;
+    const mvol = (G.volume!=null?G.volume:0.7) * vol;
     const t = this.actx.currentTime;
     const o = this.actx.createOscillator();
     const g = this.actx.createGain();
     o.type = type;
     o.frequency.setValueAtTime(freq, t);
-    g.gain.setValueAtTime(vol, t);
+    g.gain.setValueAtTime(mvol, t);
     g.gain.exponentialRampToValueAtTime(0.001, t+dur);
-    o.connect(g); g.connect(this.actx.destination);
+    o.connect(g); g.connect(this.master || this.actx.destination);
     o.start(t); o.stop(t+dur);
   },
   click(){ this.beep(880, 0.04, 'square', 0.05); },
@@ -2363,6 +2420,13 @@ const Sound = {
   alert(){ this.beep(440,0.1,'sawtooth',0.1); setTimeout(()=>this.beep(440,0.1,'sawtooth',0.1),140); },
   success(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>this.beep(f,0.12),i*70)); },
   place(){ this.beep(330,0.05); setTimeout(()=>this.beep(550,0.08),40); },
+  demolish(){ this.beep(220,0.1,'sawtooth',0.07); setTimeout(()=>this.beep(110,0.15,'sawtooth',0.07),80); },
+  recruit(){ this.beep(659,0.06); setTimeout(()=>this.beep(880,0.06),60); setTimeout(()=>this.beep(1047,0.1),120); },
+  research(){ this.beep(784,0.08,'triangle',0.06); setTimeout(()=>this.beep(988,0.08,'triangle',0.06),70); setTimeout(()=>this.beep(1319,0.15,'triangle',0.06),140); },
+  trade(){ this.beep(988,0.05); setTimeout(()=>this.beep(1175,0.07),50); setTimeout(()=>this.beep(988,0.05),120); },
+  achieve(){ [659,784,988,1319,1568].forEach((f,i)=>setTimeout(()=>this.beep(f,0.13,'triangle',0.06),i*80)); },
+  warning(){ this.beep(330,0.12,'sawtooth',0.1); setTimeout(()=>this.beep(247,0.18,'sawtooth',0.1),130); },
+  levelup(){ [523,659,784,1047,1319].forEach((f,i)=>setTimeout(()=>this.beep(f,0.1,'square',0.05),i*55)); },
 };
 
 // ---- UI ----
@@ -2503,7 +2567,7 @@ function showResearchMenu(){
         }
       }
       toast(T('研发成功：')+r.name, 'good');
-      Sound.success();
+      Sound.research();
       showResearchMenu();
     };
   });
@@ -2556,7 +2620,7 @@ function showCrewMenu(){
     addCrew(n+' '+Math.floor(Math.random()*100), stats);
     G.stats.totalRecruited++;
     toast(T('新船员加入！'), 'good');
-    Sound.success();
+    Sound.recruit();
     showCrewMenu();
   };
   // 取消分配按钮
@@ -2608,7 +2672,7 @@ function showMenu(){
   html += '<div class="mitem"><div class="t">'+T('游戏状态')+'</div><div class="d">'+T('第')+' <b>'+G.day+'</b> '+T('日')+' · '+T('船员')+' <b>'+G.crew.length+'</b> '+T('人')+' · '+T('建筑')+' <b>'+countBuildings()+'</b> '+T('座')+' · '+T('科技')+' <b>'+Object.keys(G.researchDone).length+'</b> '+T('项')+' · '+T('成就')+' <b>'+G.achievements.size+'</b> '+T('个')+' · '+T('事件')+' <b>'+G.stats.totalEvents+'</b> '+T('次')+' · '+T('招募')+' <b>'+G.stats.totalRecruited+'</b> '+T('人')+'</div></div>';
   // 产量统计
   html += '<div class="mitem"><div class="t">'+T('资源动态')+'</div><div class="d" id="res-stats">'+T('计算中...')+'</div></div>';
-  html += '<div class="mitem"><div class="t">'+T('音效')+'</div><div class="d">'+T('当前')+': '+(G.soundOn?T('开启'):T('关闭'))+'</div><button class="mbtn" id="sound-toggle">'+(G.soundOn?T('关闭音效'):T('开启音效'))+'</button></div>';
+  html += '<div class="mitem"><div class="t">' + T('音效') + '</div><div class="d"><div style="display:flex;flex-direction:column;gap:8px;"><div>' + T('当前') + ': ' + (G.soundOn?T('开启'):T('关闭')) + ' &nbsp; <button class="mbtn" id="sound-toggle">' + (G.soundOn?T('开启'):T('关闭')) + '</button></div><div>' + T('音量') + ': <input type="range" id="vol-slider" min="0" max="100" value="' + Math.round((G.volume??0.7)*100) + '" style="vertical-align:middle;width:60%;"></div><div>' + T('背景音乐') + ': ' + (G.musicOn?T('开启'):T('关闭')) + ' <button class="mbtn" id="music-toggle">' + (G.musicOn?T('开启'):T('关闭')) + '</button> <button class="mbtn" id="sound-test">' + T('测试') + '</button></div></div></div></div>';
   html += '<div class="mitem"><div class="t">'+T('存档')+'</div><div class="d">'+T('保存进度到本地')+'</div><button class="mbtn" id="save-btn">'+T('保存游戏')+'</button><button class="mbtn" id="load-btn">'+T('读取存档')+'</button></div>';
   html += '<div class="mitem"><div class="t">成就 ('+G.achievements.size+'/8)</div><div class="d">';
   const achs = [
@@ -2676,8 +2740,24 @@ function showMenu(){
   document.getElementById('res-stats').innerHTML = rateHtml;
   document.getElementById('sound-toggle').onclick = ()=>{
     G.soundOn = !G.soundOn;
-    if(G.soundOn) Sound.init();
+    if(G.soundOn){ Sound.init(); Sound.click(); }
     showMenu();
+  };
+  const vs = document.getElementById('vol-slider');
+  if(vs){
+    vs.oninput = ()=>{
+      const v = parseInt(vs.value)/100;
+      Sound.setVolume(v);
+    };
+  }
+  document.getElementById('music-toggle').onclick = ()=>{
+    Sound.init();
+    Sound.bgmToggle(!G.musicOn);
+    showMenu();
+  };
+  document.getElementById('sound-test').onclick = ()=>{
+    Sound.init();
+    Sound.success();
   };
   document.getElementById('save-btn').onclick = ()=>{
     saveGame();
@@ -2787,7 +2867,7 @@ function assignCrew(idx){
 }
 
 function demolish(idx){
-  const b = G.grid[idx];
+   Sound.demolish(); const b = G.grid[idx];
   if(!b) return;
   // 释放船员
   for(const cid of b.crew){
@@ -2833,6 +2913,11 @@ function loadGame(){
     data.achievements = new Set(data.achievements||[]);
     if(data.terrain) terrain = data.terrain;
     G = data;
+    try{
+      const v = localStorage.getItem('lunarColonyVol');
+      if(v!=null) G.volume = parseFloat(v);
+      G.musicOn = localStorage.getItem('lunarColonyMusic')==='1';
+    }catch(e){}
     return true;
   }catch(e){ return false; }
 }
@@ -3098,6 +3183,8 @@ function drawTitle(){
 
 document.getElementById('start-btn').onclick = ()=>{
   Sound.init();
+  Sound.click();
+  if(G.musicOn) Sound.bgmStart();
   document.getElementById('title').style.display = 'none';
   newGame();
   resizeCanvas();

@@ -8,11 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned
-- 音效系统 / Sound effects
 - 存档导入/导出 / Save import/export
 - 成就系统扩展 / Achievement expansion
 - 移动端手势优化 / Mobile gesture optimization
 - 更多语言（日本語 / Español）/ More languages
+
+## [0.3.0] - 2026-08-04
+
+### Added
+- 🔊 **音效系统增强 / Enhanced Sound System**
+  - Master volume control via WebAudio GainNode, persisted to `localStorage`
+  - Ambient background music: dual-oscillator drone with LFO-modulated lowpass filter
+    and randomized chime notes every 9 seconds
+  - 7 new sound effects: `demolish`, `recruit`, `research`, `trade`, `achieve`, `warning`, `levelup`
+  - Refactored audio panel in menu: sound toggle, volume slider, music toggle, test button
+  - BGM auto-starts on new game if `musicOn=true`
+  - Added i18n entries: 音量/Volume, 背景音乐/Music, 测试/Test
+
+### Changed
+- Achievement unlock now plays `Sound.achieve()` instead of generic `success()`
+- Research completion now plays `Sound.research()` instead of generic `success()`
+- Recruit now plays `Sound.recruit()` instead of generic `success()`
+- Demolish now plays `Sound.demolish()`
+- `loadGame()` restores volume/music preferences from `localStorage`
 
 ## [0.2.0] - 2026-08-03
 

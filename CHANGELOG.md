@@ -28,6 +28,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 🌐 胜利面板 / 积分过期警告国际化 / Win panel & expiry warning i18n
 - 📝 i18n 补充缺失翻译条目 / Fill in missing translation entries
 
+## [0.4.1] - 2026-08-06
+
+### Changed
+- 🌐 **i18n 翻译完善 / Improved English translations**
+  - 新增 23 条翻译条目（UI 文案、引导提示、状态行等）
+  - 音效开关 `开启/关闭` → `ON/OFF`（英文模式更地道）
+  - 补充带前导空格的字符串翻译（事件描述、状态提示）
+  - 补充产量/消耗/船员/建筑/科技/事件等状态行翻译
+  - 补充新游戏引导提示、放置建筑提示翻译
+
 ## [Unreleased]
 
 ### Planned

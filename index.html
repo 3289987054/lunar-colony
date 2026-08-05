@@ -236,7 +236,7 @@ const I18N = {
     '保存游戏': 'Save', '读取存档': 'Load', '重新开始': 'Restart',
     '继续游戏': 'Continue', '游戏状态': 'Status', '资源动态': 'Rates',
     '音效': 'Sound', '存档': 'Save', '成就': 'Achievements',
-    '当前': 'Current', '开启': 'ON', '关闭': 'OFF',
+    '当前': 'Current', 'ON': 'ON', 'OFF': 'OFF',
     '开启音效': 'Sound ON', '关闭音效': 'Sound OFF',
     '计算中...': '...', '消耗': 'Cost',
     '科研中心': 'Research', '船员管理': 'Crew',
@@ -346,7 +346,19 @@ const I18N = {
     '再次点击确认重置': 'Click again to confirm reset',
     '欢迎来到月球！点击<b>建造</b> 开始你的殖民地。目标：建造<b>月球核心</b> 并拥有 20 名船员。注意：第15天起积分将开始过期！': 'Welcome to the Moon! Click <b>Build</b> to start your colony. Goal: Build the <b>Lunar Core</b> and reach 20 crew. Note: points start expiring from Day 15!',
     '中文': '中文', 'English': 'English',
-    '游玩时间': 'Play time', '分钟': 'min',
+    // Strings with leading/trailing spaces (different from non-space versions)
+    ' 因病离世...': ' passed away from illness...',
+    ' 已取消分配': ' unassigned',
+    ' 已分配': ' assigned',
+    ' 因居住舱不足离开了殖民地': ' left (no habitat)',
+    // Additional UI strings not already in dict
+    '音量': 'Volume', '背景音乐': 'BGM', '测试': 'Test',
+    '产 ': 'Prod ', '/秒 ': '/s ', '耗 ': 'Consumes ',
+    '船员：': 'Crew: ', '建筑：': 'Buildings: ', '科技：': 'Tech: ', '事件：': 'Events: ',
+    '天。': ' days.', '积分过期警告': 'Expiry Warning',
+    '新游戏开始。点击 <b>建造</b> 开始建设。': 'New game. Tap <b>Build</b> to start.',
+    '继续点击放置 ': 'Tap to place ',
+    '先建 <b>太阳能板</b> 和 <b>制氧机</b> 维持生存。建 <b>矿场</b>、<b>温室</b>、<b>实验室</b> 发展。<b>通讯塔</b> 触发事件后研发解锁更多建筑！': 'Build <b>Solar</b> + <b>O2 Gen</b> first. Then <b>Mine</b>, <b>Farm</b>, <b>Lab</b>. <b>Comm Tower</b> unlocks events + more!',
   }
 };
 function T(zh){
@@ -2683,7 +2695,7 @@ function showMenu(){
   html += '<div class="mitem"><div class="t">'+T('游戏状态')+'</div><div class="d">'+T('第')+' <b>'+G.day+'</b> '+T('日')+' · '+T('船员')+' <b>'+G.crew.length+'</b> '+T('人')+' · '+T('建筑')+' <b>'+countBuildings()+'</b> '+T('座')+' · '+T('科技')+' <b>'+Object.keys(G.researchDone).length+'</b> '+T('项')+' · '+T('成就')+' <b>'+G.achievements.size+'</b> '+T('个')+' · '+T('事件')+' <b>'+G.stats.totalEvents+'</b> '+T('次')+' · '+T('招募')+' <b>'+G.stats.totalRecruited+'</b> '+T('人')+' · '+T('游玩时间')+' <b>'+Math.floor((Date.now()-G.stats.startTime)/60000)+'</b> '+T('分钟')+'</div></div>';
   // 产量统计
   html += '<div class="mitem"><div class="t">'+T('资源动态')+'</div><div class="d" id="res-stats">'+T('计算中...')+'</div></div>';
-  html += '<div class="mitem"><div class="t">' + T('音效') + '</div><div class="d"><div style="display:flex;flex-direction:column;gap:8px;"><div>' + T('当前') + ': ' + (G.soundOn?T('开启'):T('关闭')) + ' &nbsp; <button class="mbtn" id="sound-toggle">' + (G.soundOn?T('开启'):T('关闭')) + '</button></div><div>' + T('音量') + ': <input type="range" id="vol-slider" min="0" max="100" value="' + Math.round((G.volume??0.7)*100) + '" style="vertical-align:middle;width:60%;"></div><div>' + T('背景音乐') + ': ' + (G.musicOn?T('开启'):T('关闭')) + ' <button class="mbtn" id="music-toggle">' + (G.musicOn?T('开启'):T('关闭')) + '</button> <button class="mbtn" id="sound-test">' + T('测试') + '</button></div></div></div></div>';
+  html += '<div class="mitem"><div class="t">' + T('音效') + '</div><div class="d"><div style="display:flex;flex-direction:column;gap:8px;"><div>' + T('当前') + ': ' + (G.soundOn?T('ON'):T('OFF')) + ' &nbsp; <button class="mbtn" id="sound-toggle">' + (G.soundOn?T('ON'):T('OFF')) + '</button></div><div>' + T('音量') + ': <input type="range" id="vol-slider" min="0" max="100" value="' + Math.round((G.volume??0.7)*100) + '" style="vertical-align:middle;width:60%;"></div><div>' + T('背景音乐') + ': ' + (G.musicOn?T('ON'):T('OFF')) + ' <button class="mbtn" id="music-toggle">' + (G.musicOn?T('ON'):T('OFF')) + '</button> <button class="mbtn" id="sound-test">' + T('测试') + '</button></div></div></div></div>';
   html += '<div class="mitem"><div class="t">'+T('存档')+'</div><div class="d">'+T('保存进度到本地')+'</div><button class="mbtn" id="save-btn">'+T('保存游戏')+'</button><button class="mbtn" id="load-btn">'+T('读取存档')+'</button></div>';
   html += '<div class="mitem"><div class="t">'+T('成就')+' ('+G.achievements.size+'/15)</div><div class="d">';
   const achs = [

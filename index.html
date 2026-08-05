@@ -340,10 +340,13 @@ const I18N = {
     '今日损失了': 'Lost today:',
     '积分。': ' pts.',
     '科技可阻止积分过期。': ' can prevent expiry.',
+    '研发<b>积分保护</b>科技可阻止积分过期。': 'Research <b>Expiry Protect</b> tech to prevent expiry.',
+    '游玩时间': 'Play time', '分钟': 'min',
     '第': 'Day ', '第1日': 'Day 1', '第%s日': 'Day %s',
     '再次点击确认重置': 'Click again to confirm reset',
-    '欢迎来到月球！点击<b>建造</b> 开始你的殖民地。目标：建造<b>月球核心</b> 并拥有 20 名船员。注意：第 5天起积分将开始过期！': 'Welcome to the Moon! Click <b>Build</b> to start your colony. Goal: Build the <b>Lunar Core</b> and reach 20 crew. Note: points start expiring from Day 5!',
+    '欢迎来到月球！点击<b>建造</b> 开始你的殖民地。目标：建造<b>月球核心</b> 并拥有 20 名船员。注意：第15天起积分将开始过期！': 'Welcome to the Moon! Click <b>Build</b> to start your colony. Goal: Build the <b>Lunar Core</b> and reach 20 crew. Note: points start expiring from Day 15!',
     '中文': '中文', 'English': 'English',
+    '游玩时间': 'Play time', '分钟': 'min',
   }
 };
 function T(zh){
@@ -1498,7 +1501,7 @@ function render(){
     const b = G.grid[G.selected];
     const x = (b.gx - G.scrollX) * TILE;
     const y = (b.gy - G.scrollY) * TILE;
-    ctx.strokeStyle = C.accent;
+    ctx.strokeStyle = C.yellow;
     ctx.lineWidth = 2;
     ctx.strokeRect(x-1, y-1, TILE+2, TILE+2);
   }
@@ -2047,12 +2050,15 @@ function showEventPopup(ev){
   html += '<canvas id="evcanvas" width="48" height="48"></canvas>';
   html += '<p>'+ev.desc+'</p>';
   if(ev.custom === 'trade'){
-    // 贸易选项
+    // 贸易选项（与贸易站菜单一致，含科技加成）
+    const tradeMult = G.researchDone.trade2 ? 1.5 : 1;
     const offers = [
-      {give:'credit', giveAmt:50, get:'mineral', getAmt:30},
-      {give:'credit', giveAmt:50, get:'food', getAmt:30},
-      {give:'mineral', giveAmt:30, get:'credit', getAmt:60},
-      {give:'credit', giveAmt:80, get:'research', getAmt:25},
+      {give:'credit', giveAmt:50, get:'mineral', getAmt:Math.floor(30*tradeMult)},
+      {give:'credit', giveAmt:50, get:'food', getAmt:Math.floor(30*tradeMult)},
+      {give:'mineral', giveAmt:30, get:'credit', getAmt:Math.floor(60*tradeMult)},
+      {give:'credit', giveAmt:80, get:'research', getAmt:Math.floor(25*tradeMult)},
+      {give:'food', giveAmt:40, get:'credit', getAmt:Math.floor(50*tradeMult)},
+      {give:'credit', giveAmt:120, get:'oxygen', getAmt:Math.floor(60*tradeMult)},
     ];
     G.tradeOffers = offers;
     html += '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">';
@@ -2436,6 +2442,7 @@ function updateHUD(){
   let html = '';
   for(let ri=0; ri<RES.length; ri++){
     const r = RES[ri];
+    if(r.key==='expiry' && G.day < 15) continue;
     const v = Math.floor(G.res[r.key]);
     const cap = G.cap[r.key] >= 9999 ? '∞' : Math.floor(G.cap[r.key]);
     const low = v < (typeof cap==='number'?cap*0.1:10);
@@ -2476,6 +2483,9 @@ function hideOverlay(){
 }
 
 function showBuildMenu(){
+  // 统计各类建筑数量
+  const counts = {};
+  for(const b of G.grid) if(b) counts[b.type] = (counts[b.type]||0)+1;
   let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>'+T('建造')+'</h2><div class="blist">';
   for(const key in BDEF){
     const def = BDEF[key];
@@ -2484,9 +2494,10 @@ function showBuildMenu(){
     let canAfford = true;
     for(const k in def.cost) if(G.res[k] < def.cost[k]) canAfford = false;
     const costStr = Object.entries(def.cost).map(([k,v])=>v+' '+RES.find(r=>r.key===k).name).join(' ');
+    const cnt = counts[key]||0;
     html += '<div class="bcard'+(canAfford?'':' cant')+'" data-build="'+key+'">';
     html += '<canvas width="32" height="32" data-spr="'+key+'"></canvas>';
-    html += '<div class="info"><div class="nm">'+def.name+'</div>';
+    html += '<div class="info"><div class="nm">'+def.name+(cnt>0?' <span style="color:var(--good);font-size:8px">×'+cnt+'</span>':'')+'</div>';
     html += '<div class="cost">'+costStr+'</div>';
     html += '<div class="desc">'+def.desc+'</div></div></div>';
   }
@@ -2645,7 +2656,7 @@ function showCrewMenu(){
 
 function showExpiryWarning(loss){
   const box = document.getElementById('evbox');
-  box.innerHTML = '<h3 style="color:var(--bad)">⚠ 积分过期警告</h3><canvas id="evcanvas" width="48" height="48"></canvas><p>你的积分已开始过期！<br>今日损失了 <b>'+loss+'</b> 积分。<br>研发<b>积分保护</b>科技可阻止积分过期。</p><button class="evbtn" id="ev-ok">'+T('了解')+'</button>';
+  box.innerHTML = '<h3 style="color:var(--bad)">⚠ '+T('积分过期警告')+'</h3><canvas id="evcanvas" width="48" height="48"></canvas><p>'+T('你的积分已开始过期！')+'<br>'+T('今日损失了')+' <b>'+loss+'</b> '+T('积分。')+'<br>'+T('研发<b>积分保护</b>科技可阻止积分过期。')+'</p><button class="evbtn" id="ev-ok">'+T('了解')+'</button>';
   document.getElementById('eventpop').classList.add('on');
   const ec = document.getElementById('evcanvas');
   if(ec){
@@ -2669,12 +2680,12 @@ function showExpiryWarning(loss){
 function showMenu(){
   let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>'+T('菜单')+'</h2>';
   html += '<div class="mlist">';
-  html += '<div class="mitem"><div class="t">'+T('游戏状态')+'</div><div class="d">'+T('第')+' <b>'+G.day+'</b> '+T('日')+' · '+T('船员')+' <b>'+G.crew.length+'</b> '+T('人')+' · '+T('建筑')+' <b>'+countBuildings()+'</b> '+T('座')+' · '+T('科技')+' <b>'+Object.keys(G.researchDone).length+'</b> '+T('项')+' · '+T('成就')+' <b>'+G.achievements.size+'</b> '+T('个')+' · '+T('事件')+' <b>'+G.stats.totalEvents+'</b> '+T('次')+' · '+T('招募')+' <b>'+G.stats.totalRecruited+'</b> '+T('人')+'</div></div>';
+  html += '<div class="mitem"><div class="t">'+T('游戏状态')+'</div><div class="d">'+T('第')+' <b>'+G.day+'</b> '+T('日')+' · '+T('船员')+' <b>'+G.crew.length+'</b> '+T('人')+' · '+T('建筑')+' <b>'+countBuildings()+'</b> '+T('座')+' · '+T('科技')+' <b>'+Object.keys(G.researchDone).length+'</b> '+T('项')+' · '+T('成就')+' <b>'+G.achievements.size+'</b> '+T('个')+' · '+T('事件')+' <b>'+G.stats.totalEvents+'</b> '+T('次')+' · '+T('招募')+' <b>'+G.stats.totalRecruited+'</b> '+T('人')+' · '+T('游玩时间')+' <b>'+Math.floor((Date.now()-G.stats.startTime)/60000)+'</b> '+T('分钟')+'</div></div>';
   // 产量统计
   html += '<div class="mitem"><div class="t">'+T('资源动态')+'</div><div class="d" id="res-stats">'+T('计算中...')+'</div></div>';
   html += '<div class="mitem"><div class="t">' + T('音效') + '</div><div class="d"><div style="display:flex;flex-direction:column;gap:8px;"><div>' + T('当前') + ': ' + (G.soundOn?T('开启'):T('关闭')) + ' &nbsp; <button class="mbtn" id="sound-toggle">' + (G.soundOn?T('开启'):T('关闭')) + '</button></div><div>' + T('音量') + ': <input type="range" id="vol-slider" min="0" max="100" value="' + Math.round((G.volume??0.7)*100) + '" style="vertical-align:middle;width:60%;"></div><div>' + T('背景音乐') + ': ' + (G.musicOn?T('开启'):T('关闭')) + ' <button class="mbtn" id="music-toggle">' + (G.musicOn?T('开启'):T('关闭')) + '</button> <button class="mbtn" id="sound-test">' + T('测试') + '</button></div></div></div></div>';
   html += '<div class="mitem"><div class="t">'+T('存档')+'</div><div class="d">'+T('保存进度到本地')+'</div><button class="mbtn" id="save-btn">'+T('保存游戏')+'</button><button class="mbtn" id="load-btn">'+T('读取存档')+'</button></div>';
-  html += '<div class="mitem"><div class="t">成就 ('+G.achievements.size+'/8)</div><div class="d">';
+  html += '<div class="mitem"><div class="t">'+T('成就')+' ('+G.achievements.size+'/15)</div><div class="d">';
   const achs = [
     ['crew5',T('小队成立'),T('5名船员')],
     ['crew10',T('殖民地'),T('10名船员')],
@@ -2729,6 +2740,10 @@ function showMenu(){
     }
   }
   rates.oxygen -= G.crew.length * 0.15;
+  // 水循环站减少氧气消耗
+  for(let i=0;i<G.grid.length;i++){
+    if(G.grid[i] && G.grid[i].type==='waterpur'){ rates.oxygen += G.crew.length * 0.15 * 0.5; break; }
+  }
   rates.food -= G.crew.length * 0.12;
   let rateHtml = '';
   for(const r of RES){
@@ -2867,8 +2882,9 @@ function assignCrew(idx){
 }
 
 function demolish(idx){
-   Sound.demolish(); const b = G.grid[idx];
+  const b = G.grid[idx];
   if(!b) return;
+  Sound.demolish();
   // 释放船员
   for(const cid of b.crew){
     const c = G.crew.find(x=>x.id===cid);
@@ -2927,16 +2943,22 @@ function showGameOver(){
   G.gameOver = true;
   G.paused = true;
   const box = document.getElementById('evbox');
-  box.innerHTML = '<h3 style="color:var(--bad)">'+T('★ 殖民地覆灭 ★')+'</h3><canvas id="evcanvas" width="48" height="48"></canvas><p>'+T('资源耗尽，士气崩溃。')+'<br>'+T('殖民地存活了')+' <b>'+G.day+'</b> '+T('天。')+'<br>'+T('船员：')+'<b>'+G.crew.length+'</b>'+T('人')+' · '+T('建筑：')+'<b>'+countBuildings()+'</b>'+T('座')+' · '+T('科技：')+'<b>'+Object.keys(G.researchDone).length+'</b>'+T('项')+'</p><button class="evbtn" id="ev-ok" style="background:var(--bad)">'+T('重新开始')+'</button>';
+  box.innerHTML = '<h3 style="color:var(--bad)">'+T('★ 殖民地覆灭 ★')+'</h3><canvas id="evcanvas" width="48" height="48"></canvas><p>'+T('资源耗尽，士气崩溃。')+'<br>'+T('殖民地存活了')+' <b>'+G.day+'</b> '+T('天。')+'<br>'+T('船员：')+'<b>'+G.crew.length+'</b>'+T('人')+' · '+T('建筑：')+'<b>'+countBuildings()+'</b>'+T('座')+' · '+T('科技：')+'<b>'+Object.keys(G.researchDone).length+'</b>'+T('项')+' · '+T('事件：')+'<b>'+G.stats.totalEvents+'</b>'+T('次')+'</p><button class="evbtn" id="ev-ok" style="background:var(--bad)">'+T('重新开始')+'</button>';
   document.getElementById('eventpop').classList.add('on');
   const ec = document.getElementById('evcanvas');
   if(ec){
     const ectx = ec.getContext('2d');
     ectx.imageSmoothingEnabled = false;
     ectx.fillStyle = '#0a0e1a'; ectx.fillRect(0,0,48,48);
+    // 骷髅头
     ectx.fillStyle = C.redDark; ectx.fillRect(14,14,20,20);
-    ectx.fillStyle = C.red; ectx.fillRect(18,18,12,12);
-    ectx.fillStyle = '#1a0a0a'; ectx.fillRect(22,22,4,4);
+    ectx.fillStyle = '#fff'; ectx.fillRect(16,12,16,20);
+    ectx.fillStyle = '#fff'; ectx.fillRect(14,16,20,12);
+    ectx.fillStyle = '#1a0a0a'; ectx.fillRect(18,18,4,4); ectx.fillRect(26,18,4,4);
+    ectx.fillStyle = C.red; ectx.fillRect(19,19,2,2); ectx.fillRect(27,19,2,2);
+    ectx.fillStyle = '#1a0a0a'; ectx.fillRect(22,24,4,4);
+    ectx.fillStyle = '#1a0a0a'; ectx.fillRect(18,30,2,2); ectx.fillRect(22,30,2,2); ectx.fillRect(26,30,2,2); ectx.fillRect(30,30,2,2);
+    ectx.fillStyle = C.bad; ectx.fillRect(14,34,20,2);
   }
   document.getElementById('ev-ok').onclick = ()=>{
     document.getElementById('eventpop').classList.remove('on');
@@ -2952,7 +2974,7 @@ function showGameOver(){
 function showWin(){
   G.paused = true;
   const box = document.getElementById('evbox');
-  box.innerHTML = '<h3>★ 胜利！★</h3><canvas id="evcanvas" width="48" height="48"></canvas><p>恭喜！你成功建造了月球核心，并拥有20名船员。<br>月球殖民地正式成为月球都市！<br>用时：'+G.day+'天</p><button class="evbtn" id="ev-ok">'+T('继续游戏')+'</button>';
+  box.innerHTML = '<h3>'+T('★ 胜利！★')+'</h3><canvas id="evcanvas" width="48" height="48"></canvas><p>'+T('恭喜！你成功建造了月球核心，并拥有20名船员。')+'<br>'+T('月球殖民地正式成为月球都市！')+'<br>'+T('用时：')+G.day+T('天')+'</p><button class="evbtn" id="ev-ok">'+T('继续游戏')+'</button>';
   document.getElementById('eventpop').classList.add('on');
   const ec = document.getElementById('evcanvas');
   if(ec){
@@ -3214,6 +3236,31 @@ requestAnimationFrame(loop);
 document.body.addEventListener('touchmove', (e)=>e.preventDefault(), {passive:false});
 document.addEventListener('gesturestart', (e)=>e.preventDefault());
 
+// ---- 键盘快捷键 ----
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='Escape'){
+    if(G.placeMode){
+      G.placeMode = null;
+      document.getElementById('btn-build').classList.remove('on');
+      setInfo(T('已取消建造模式。'));
+    } else {
+      hideOverlay();
+      document.getElementById('eventpop').classList.remove('on');
+      if(G.eventActive){ G.eventActive = false; G.paused = false; }
+    }
+  } else if(e.key>='0' && e.key<='5'){
+    const spd = parseInt(e.key);
+    if(spd===0 || spd===1 || spd===3 || spd===5){
+      G.speed = spd;
+      G.paused = spd === 0;
+      document.querySelectorAll('.spd').forEach(b=>{
+        b.classList.toggle('on', parseInt(b.dataset.spd)===spd);
+      });
+      Sound.click();
+    }
+  }
+});
+
 
 // Language switch handler
 document.querySelectorAll('.lang-btn').forEach(btn=>{
@@ -3236,7 +3283,7 @@ document.querySelectorAll('.lang-btn').forEach(btn=>{
     const sp = document.getElementById('pause-label');
     if(sp) sp.textContent = T('‖ 暂停');
     const ib = document.getElementById('infobar');
-    if(ib) ib.innerHTML = T('欢迎来到月球！点击<b>建造</b> 开始你的殖民地。目标：建造<b>月球核心</b> 并拥有 20 名船员。注意：第 5天起积分将开始过期！');
+    if(ib) ib.innerHTML = T('欢迎来到月球！点击<b>建造</b> 开始你的殖民地。目标：建造<b>月球核心</b> 并拥有 20 名船员。注意：第15天起积分将开始过期！');
     const dt = document.getElementById('daytxt');
     if(dt) dt.textContent = TF('第%s日', G.day);
   });

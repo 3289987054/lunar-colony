@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-08-05
+
+### Fixed
+- 🐛 **Bug 修复 / Bug fixes**
+  - `C.accent` 未定义错误 → 改用 `C.yellow`（选中建筑高亮）
+  - 成就计数 `/8` → `/15`（与实际 15 个成就一致）
+  - `demolish()` 中 `Sound.demolish()` 调用位置修正（移到 `b` 存在检查之后）
+  - 积分过期提示 `第5天` → `第15天`（中英文同步修正）
+
+### Added
+- 📊 Game Over 面板增加事件次数统计 / Event count in Game Over panel
+- 💀 Game Over 图标改为像素骷髅头 / Pixel skull icon on Game Over
+- ⌨️ 键盘快捷键 / Keyboard shortcuts: `Esc` 取消/关闭，`0/1/3/5` 切换速度
+- 🏗️ 建造菜单显示已建数量 / Building count (×N) in build menu
+- ⏱️ 菜单状态行增加游玩时间统计 / Play time in menu status
+- 💧 菜单资源动态加入水循环站氧气节省逻辑 / Water recycler O₂ savings in resource panel
+
+### Changed
+- 🔄 事件贸易弹窗从 4 种扩展为 6 种方案，接入 `tradeMult` 科技加成
+- 🕗 过期积分在第 15 天前隐藏 / Expiry score hidden before Day 15
+- 🌐 胜利面板 / 积分过期警告国际化 / Win panel & expiry warning i18n
+- 📝 i18n 补充缺失翻译条目 / Fill in missing translation entries
+
 ## [Unreleased]
 
 ### Planned

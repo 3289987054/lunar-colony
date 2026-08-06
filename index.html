@@ -375,6 +375,23 @@ function setLang(lang){
   I18N.lang = lang;
   localStorage.setItem('lunarColonyLang', lang);
   if(typeof updateHUD === 'function') updateHUD();
+  // Refresh open overlay panel
+  const ov = document.getElementById('overlay');
+  if(ov && ov.classList.contains('on')){
+    const panel = document.getElementById('panel');
+    const html = panel ? panel.innerHTML : '';
+    if(html.includes('blist')) showBuildMenu();
+    else if(html.includes('rlist')) showResearchMenu();
+    else if(html.includes('clist')||html.includes('ccard')) showCrewMenu();
+    else if(html.includes('mitem')) showMenu();
+    else if(html.includes('evbtn')&&(html.includes('当前金币')||html.includes(T('当前金币')))) showTradeMenu();
+    // Event popup and other dynamic popups are harder to refresh,
+    // but they're short-lived so acceptable
+  }
+  // Refresh selinfo if a building is selected
+  if(typeof G !== 'undefined' && G.selected != null && G.grid[G.selected]){
+    showSelInfo(G.selected);
+  }
 }
 
 
@@ -515,61 +532,61 @@ function drawResIcon(c, key){
 
 // ---- 建筑定义 ----
 const BDEF = {
-  habitat:    {name:T('居住舱'),  desc:T('容纳+2船员'), cost:{mineral:20,credit:40},  cap:{colonist:2}, col:'#e8ecff', unlock:true},
-  solar:       {name:T('太阳能板'),desc:T('白天产能量'), cost:{mineral:10,credit:25},  prod:{energy:0.8}, dayOnly:true, col:'#ffd34e', unlock:true},
-  rtg:         {name:T('同位素发电机'),desc:T('全天产能量'),cost:{mineral:30,credit:60}, prod:{energy:0.5}, col:'#ff9844', tech:'rtg'},
-  oxygen:      {name:T('制氧机'),  desc:T('产氧气'),   cost:{mineral:15,credit:35}, prod:{oxygen:0.7}, use:{energy:0.15}, col:'#7ad7ff', unlock:true},
-  mine:        {name:T('采矿场'),  desc:T('产矿物 需船员'), cost:{mineral:0,credit:50},  prod:{mineral:0.5}, use:{energy:0.1}, needCrew:true, job:'mining', col:'#c9a0ff', unlock:true},
-  greenhouse:  {name:T('温室'),   desc:T('产食物 需船员'), cost:{mineral:20,credit:55}, prod:{food:0.5}, use:{energy:0.12,oxygen:0.05}, needCrew:true, job:'farming', col:'#7ae870', unlock:true},
-  lab:         {name:T('实验室'),  desc:T('产科研 需船员'), cost:{mineral:35,credit:80}, prod:{research:0.4}, use:{energy:0.15}, needCrew:true, job:'science', col:'#7ad7ff', unlock:true},
-  storage:     {name:T('仓库'),    desc:T('提升存储上限'), cost:{mineral:25,credit:45}, capAdd:{energy:150,oxygen:150,mineral:150,food:150}, col:'#9aa0b8', unlock:true},
-  comm:        {name:T('通讯塔'),  desc:T('解锁事件与贸易'), cost:{mineral:30,credit:70}, flag:'comm', col:'#5ab8e8', tech:'comm'},
-  rec:         {name:T('娱乐室'),  desc:T('提升士气'), cost:{mineral:20,credit:50}, morale:0.5, use:{energy:0.08}, col:'#ff9844', tech:'rec'},
-  core:        {name:T('月球核心'), desc:T('胜利建筑！'), cost:{mineral:200,credit:200,research:500}, flag:'core', col:'#ffd34e', tech:'core'},
-  tradepost:   {name:T('贸易站'),  desc:T('用金币换取资源'), cost:{mineral:25,credit:60}, flag:'trade', col:'#ffe08a', tech:'comm'},
-  medbay:      {name:T('医务室'),  desc:T('治疗船员 降低死亡风险'), cost:{mineral:40,credit:70}, use:{energy:0.1}, healRate:0.3, col:'#ff6b6b', tech:'medtech'},
-  observatory: {name:T('天文台'),  desc:T('被动产科研 预警事件'), cost:{mineral:45,credit:90}, prod:{research:0.2}, use:{energy:0.08}, eventBoost:3, col:'#9ae0ff', tech:'obstech'},
-  waterpur:    {name:T('水循环站'),desc:T('减少50%氧气消耗'), cost:{mineral:30,credit:65}, use:{energy:0.06}, oxygenSave:0.5, col:'#7ad7ff', tech:'watertech'},
-  droidbay:    {name:T('机器人车间'),desc:T('自动产矿物 无需船员'), cost:{mineral:50,credit:100}, prod:{mineral:0.35}, use:{energy:0.18}, col:'#c9a0ff', tech:'droidtech'},
-  radar:       {name:T('雷达站'),  desc:T('探测陨石 减少事件损失'), cost:{mineral:35,credit:85}, use:{energy:0.12}, shield:0.5, col:'#5fe8a8', tech:'shieldtech'},
+  habitat:    {name:'居住舱',  desc:'容纳+2船员', cost:{mineral:20,credit:40},  cap:{colonist:2}, col:'#e8ecff', unlock:true},
+  solar:       {name:'太阳能板',desc:'白天产能量', cost:{mineral:10,credit:25},  prod:{energy:0.8}, dayOnly:true, col:'#ffd34e', unlock:true},
+  rtg:         {name:'同位素发电机',desc:'全天产能量',cost:{mineral:30,credit:60}, prod:{energy:0.5}, col:'#ff9844', tech:'rtg'},
+  oxygen:      {name:'制氧机',  desc:'产氧气',   cost:{mineral:15,credit:35}, prod:{oxygen:0.7}, use:{energy:0.15}, col:'#7ad7ff', unlock:true},
+  mine:        {name:'采矿场',  desc:'产矿物 需船员', cost:{mineral:0,credit:50},  prod:{mineral:0.5}, use:{energy:0.1}, needCrew:true, job:'mining', col:'#c9a0ff', unlock:true},
+  greenhouse:  {name:'温室',   desc:'产食物 需船员', cost:{mineral:20,credit:55}, prod:{food:0.5}, use:{energy:0.12,oxygen:0.05}, needCrew:true, job:'farming', col:'#7ae870', unlock:true},
+  lab:         {name:'实验室',  desc:'产科研 需船员', cost:{mineral:35,credit:80}, prod:{research:0.4}, use:{energy:0.15}, needCrew:true, job:'science', col:'#7ad7ff', unlock:true},
+  storage:     {name:'仓库',    desc:'提升存储上限', cost:{mineral:25,credit:45}, capAdd:{energy:150,oxygen:150,mineral:150,food:150}, col:'#9aa0b8', unlock:true},
+  comm:        {name:'通讯塔',  desc:'解锁事件与贸易', cost:{mineral:30,credit:70}, flag:'comm', col:'#5ab8e8', tech:'comm'},
+  rec:         {name:'娱乐室',  desc:'提升士气', cost:{mineral:20,credit:50}, morale:0.5, use:{energy:0.08}, col:'#ff9844', tech:'rec'},
+  core:        {name:'月球核心', desc:'胜利建筑！', cost:{mineral:200,credit:200,research:500}, flag:'core', col:'#ffd34e', tech:'core'},
+  tradepost:   {name:'贸易站',  desc:'用金币换取资源', cost:{mineral:25,credit:60}, flag:'trade', col:'#ffe08a', tech:'comm'},
+  medbay:      {name:'医务室',  desc:'治疗船员 降低死亡风险', cost:{mineral:40,credit:70}, use:{energy:0.1}, healRate:0.3, col:'#ff6b6b', tech:'medtech'},
+  observatory: {name:'天文台',  desc:'被动产科研 预警事件', cost:{mineral:45,credit:90}, prod:{research:0.2}, use:{energy:0.08}, eventBoost:3, col:'#9ae0ff', tech:'obstech'},
+  waterpur:    {name:'水循环站',desc:'减少50%氧气消耗', cost:{mineral:30,credit:65}, use:{energy:0.06}, oxygenSave:0.5, col:'#7ad7ff', tech:'watertech'},
+  droidbay:    {name:'机器人车间',desc:'自动产矿物 无需船员', cost:{mineral:50,credit:100}, prod:{mineral:0.35}, use:{energy:0.18}, col:'#c9a0ff', tech:'droidtech'},
+  radar:       {name:'雷达站',  desc:'探测陨石 减少事件损失', cost:{mineral:35,credit:85}, use:{energy:0.12}, shield:0.5, col:'#5fe8a8', tech:'shieldtech'},
 };
 
 // ---- 科技定义 ----
 const RDEF = {
-  rtg:    {name:T('同位素发电'), cost:60, desc:T('解锁同位素发电机（全天供电）'), unlock:'rtg'},
-  comm:   {name:T('深空通讯'), cost:80, desc:T('解锁通讯塔（触发事件与贸易）'), unlock:'comm'},
-  rec:    {name:T('休闲设施'), cost:100, desc:T('解锁娱乐室（维持船员士气）'), unlock:'rec'},
-  solar2: {name:T('高效光伏'), cost:120, desc:T('太阳能板效率+50%'), boost:{solar:1.5}},
-  oxygen2:{name:T('循环制氧'), cost:140, desc:T('制氧机效率+50%'), boost:{oxygen:1.5}},
-  mine2:  {name:T('深层钻探'), cost:160, desc:T('采矿场效率+50%'), boost:{mine:1.5}},
-  farm2:  {name:T('水培栽培'), cost:180, desc:T('温室效率+50%'), boost:{greenhouse:1.5}},
-  lab2:   {name:T('量子计算'), cost:220, desc:T('实验室效率+80%'), boost:{lab:1.8}},
-  storage2:{name:T('压缩仓储'), cost:120, desc:T('所有存储上限+200'), boost:{cap:200}},
-  habitat2:{name:T('扩展居所'), cost:150, desc:T('居住舱容量+2'), boost:{habitatCap:2}},
-  core:   {name:T('月球核心计划'), cost:300, desc:T('解锁终极建筑：月球核心'), unlock:'core'},
-  trade2: {name:T('星际贸易'), cost:100, desc:T('贸易站效率+50%，每次贸易额外获得10金币'), boost:{trade:1.5}},
-  energy2:{name:T('能量存储'), cost:90, desc:T('所有建筑能耗-20%'), boost:{energyUse:0.8}},
-  recruit:{name:T('招募策略'), cost:110, desc:T('招募船员费用-30%'), boost:{recruit:0.7}},
-  medtech: {name:T('医疗技术'), cost:100, desc:T('解锁医务室（治疗船员，降低死亡风险）'), unlock:'medtech'},
-  obstech: {name:T('天文观测'), cost:130, desc:T('解锁天文台（被动科研+预警事件）'), unlock:'obstech'},
-  watertech:{name:T('水循环技术'), cost:120, desc:T('解锁水循环站（减少50%氧气消耗）'), unlock:'watertech'},
-  droidtech:{name:T('机器人技术'), cost:150, desc:T('解锁机器人车间（自动采矿，无需船员）'), unlock:'droidtech'},
-  shieldtech:{name:T('陨石防御'), cost:140, desc:T('解锁雷达站（探测陨石，减少事件损害）'), unlock:'shieldtech'},
-  terraform:{name:T('初阶地表改造'), cost:350, desc:T('所有资源产能+20%，解锁月球核心前的终阶科技'), boost:{allProd:1.2}},
-  expiryProtect:{name:T('积分保护'), cost:120, desc:T('阻止每天30%积分的自动过期'), unlock:'expiryProtect'},
-  medbay2: {name:T('高级医疗'), cost:180, desc:T('医务室治疗效率翻倍'), boost:{heal:2}},
-  robot2:  {name:T('智能采矿'), cost:200, desc:T('机器人车间产量翻倍'), boost:{droid:2}},
-  radar2:  {name:T('深空预警'), cost:170, desc:T('雷达站保护提升至90%'), boost:{shield:0.9}},
+  rtg:    {name:'同位素发电', cost:60, desc:'解锁同位素发电机（全天供电）', unlock:'rtg'},
+  comm:   {name:'深空通讯', cost:80, desc:'解锁通讯塔（触发事件与贸易）', unlock:'comm'},
+  rec:    {name:'休闲设施', cost:100, desc:'解锁娱乐室（维持船员士气）', unlock:'rec'},
+  solar2: {name:'高效光伏', cost:120, desc:'太阳能板效率+50%', boost:{solar:1.5}},
+  oxygen2:{name:'循环制氧', cost:140, desc:'制氧机效率+50%', boost:{oxygen:1.5}},
+  mine2:  {name:'深层钻探', cost:160, desc:'采矿场效率+50%', boost:{mine:1.5}},
+  farm2:  {name:'水培栽培', cost:180, desc:'温室效率+50%', boost:{greenhouse:1.5}},
+  lab2:   {name:'量子计算', cost:220, desc:'实验室效率+80%', boost:{lab:1.8}},
+  storage2:{name:'压缩仓储', cost:120, desc:'所有存储上限+200', boost:{cap:200}},
+  habitat2:{name:'扩展居所', cost:150, desc:'居住舱容量+2', boost:{habitatCap:2}},
+  core:   {name:'月球核心计划', cost:300, desc:'解锁终极建筑：月球核心', unlock:'core'},
+  trade2: {name:'星际贸易', cost:100, desc:'贸易站效率+50%，每次贸易额外获得10金币', boost:{trade:1.5}},
+  energy2:{name:'能量存储', cost:90, desc:'所有建筑能耗-20%', boost:{energyUse:0.8}},
+  recruit:{name:'招募策略', cost:110, desc:'招募船员费用-30%', boost:{recruit:0.7}},
+  medtech: {name:'医疗技术', cost:100, desc:'解锁医务室（治疗船员，降低死亡风险）', unlock:'medtech'},
+  obstech: {name:'天文观测', cost:130, desc:'解锁天文台（被动科研+预警事件）', unlock:'obstech'},
+  watertech:{name:'水循环技术', cost:120, desc:'解锁水循环站（减少50%氧气消耗）', unlock:'watertech'},
+  droidtech:{name:'机器人技术', cost:150, desc:'解锁机器人车间（自动采矿，无需船员）', unlock:'droidtech'},
+  shieldtech:{name:'陨石防御', cost:140, desc:'解锁雷达站（探测陨石，减少事件损害）', unlock:'shieldtech'},
+  terraform:{name:'初阶地表改造', cost:350, desc:'所有资源产能+20%，解锁月球核心前的终阶科技', boost:{allProd:1.2}},
+  expiryProtect:{name:'积分保护', cost:120, desc:'阻止每天30%积分的自动过期', unlock:'expiryProtect'},
+  medbay2: {name:'高级医疗', cost:180, desc:'医务室治疗效率翻倍', boost:{heal:2}},
+  robot2:  {name:'智能采矿', cost:200, desc:'机器人车间产量翻倍', boost:{droid:2}},
+  radar2:  {name:'深空预警', cost:170, desc:'雷达站保护提升至90%', boost:{shield:0.9}},
 };
 
 // ---- 资源定义 ----
 const RES = [
-  {key:'energy',  name:T('能量'),  icon:'#ffd34e', cap:300, start:120},
-  {key:'oxygen',   name:T('氧气'),  icon:'#7ad7ff', cap:300, start:120},
-  {key:'mineral',  name:T('矿物'),  icon:'#c9a0ff', cap:300, start:60},
-  {key:'food',     name:T('食物'),  icon:'#9fe870', cap:300, start:60},
-  {key:'credit',   name:T('金币'),  icon:'#ffe08a', cap:9999, start:500},
-  {key:'research', name:T('科研'),  icon:'#7ad7ff', cap:9999, start:0},{key:'expiry', name:T('过期积分'), icon:'#ff6b6b', cap:9999, start:0},
+  {key:'energy',  name:'能量',  icon:'#ffd34e', cap:300, start:120},
+  {key:'oxygen',   name:'氧气',  icon:'#7ad7ff', cap:300, start:120},
+  {key:'mineral',  name:'矿物',  icon:'#c9a0ff', cap:300, start:60},
+  {key:'food',     name:'食物',  icon:'#9fe870', cap:300, start:60},
+  {key:'credit',   name:'金币',  icon:'#ffe08a', cap:9999, start:500},
+  {key:'research', name:'科研',  icon:'#7ad7ff', cap:9999, start:0},{key:'expiry', name:'过期积分', icon:'#ff6b6b', cap:9999, start:0},
 ];
 
 // ---- 游戏状态 ----
@@ -1733,7 +1750,7 @@ function checkAchievements(){
 // ---- 事件系统 ----
 const EVENTS = [
   {
-    title:T('陨石撞击'), desc:T('一颗陨石击中了基地！部分建筑受损。'),
+    title:'陨石撞击', desc:'一颗陨石击中了基地！部分建筑受损。',
     good:false, weight:3,
     apply(){
       const buildings = [];
@@ -1747,7 +1764,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('冰矿发现'), desc:T('勘探队发现了地下冰矿！获得大量矿物。'),
+    title:'冰矿发现', desc:'勘探队发现了地下冰矿！获得大量矿物。',
     good:true, weight:3,
     apply(){
       const amt = 30 + Math.floor(Math.random()*30);
@@ -1757,7 +1774,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('太阳能风暴'), desc:T('太阳活动剧烈，太阳能板效率大增！'),
+    title:'太阳能风暴', desc:'太阳活动剧烈，太阳能板效率大增！',
     good:true, weight:2,
     apply(){
       G.res.energy = Math.min(G.cap.energy, G.res.energy + 50);
@@ -1766,11 +1783,11 @@ const EVENTS = [
     }
   },
   {
-    title:T('贸易商船'), desc:T('地球贸易船到达，可用金币换取资源。'),
+    title:'贸易商船', desc:'地球贸易船到达，可用金币换取资源。',
     good:true, weight:3, custom:'trade',
   },
   {
-    title:T('新移民'), desc:T('一批新移民希望加入殖民地！'),
+    title:'新移民', desc:'一批新移民希望加入殖民地！',
     good:true, weight:3,
     apply(){
       const names = [T('伽马'),T('德尔塔'),T('艾普西龙'),T('泽塔'),T('伊塔'),T('西塔'),T('艾欧塔'),T('卡帕')];
@@ -1783,7 +1800,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('设备故障'), desc:T('一台设备出现故障，损失部分能量。'),
+    title:'设备故障', desc:'一台设备出现故障，损失部分能量。',
     good:false, weight:2,
     apply(){
       G.res.energy = Math.max(0, G.res.energy - 30);
@@ -1792,7 +1809,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('科学突破'), desc:T('研究人员取得了重大突破！获得科研点。'),
+    title:'科学突破', desc:'研究人员取得了重大突破！获得科研点。',
     good:true, weight:2,
     apply(){
       const amt = 20 + Math.floor(Math.random()*20);
@@ -1802,7 +1819,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('月面日出'), desc:T('壮丽的地球升起，船员士气大振！'),
+    title:'月面日出', desc:'壮丽的地球升起，船员士气大振！',
     good:true, weight:2,
     apply(){
       G.morale = Math.min(100, G.morale + 20);
@@ -1811,7 +1828,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('月震'), desc:T('轻微月震震动了基地，部分资源散落。'),
+    title:'月震', desc:'轻微月震震动了基地，部分资源散落。',
     good:false, weight:2,
     apply(){
       const loss = 10 + Math.floor(Math.random()*15);
@@ -1822,7 +1839,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('富矿脉发现'), desc:T('采矿场发现了富矿脉，矿物产量临时大增！'),
+    title:'富矿脉发现', desc:'采矿场发现了富矿脉，矿物产量临时大增！',
     good:true, weight:2,
     apply(){
       const amt = 40 + Math.floor(Math.random()*40);
@@ -1832,7 +1849,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('船员训练'), desc:T('一名船员完成了专项训练，能力提升！'),
+    title:'船员训练', desc:'一名船员完成了专项训练，能力提升！',
     good:true, weight:2,
     apply(){
       if(G.crew.length===0) return;
@@ -1845,7 +1862,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('沙暴来袭'), desc:T('月面沙暴覆盖了太阳能板，能量暂停恢复。'),
+    title:'沙暴来袭', desc:'月面沙暴覆盖了太阳能板，能量暂停恢复。',
     good:false, weight:2,
     apply(){
       G.res.energy = Math.max(0, G.res.energy - 20);
@@ -1855,7 +1872,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('月面探测'), desc:T('月球车发现了稀有氦-3矿藏！获得大量科研点。'),
+    title:'月面探测', desc:'月球车发现了稀有氦-3矿藏！获得大量科研点。',
     good:true, weight:2,
     apply(){
       const amt = 30 + Math.floor(Math.random()*40);
@@ -1865,7 +1882,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('殖民地节日'), desc:T('今天是殖民地成立纪念日，船员们举行了小型庆祝活动！'),
+    title:'殖民地节日', desc:'今天是殖民地成立纪念日，船员们举行了小型庆祝活动！',
     good:true, weight:2,
     apply(){
       G.morale = Math.min(100, G.morale + 15);
@@ -1875,7 +1892,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('氧气泄漏'), desc:T('管道系统出现裂缝导致氧气泄漏，需紧急修复。'),
+    title:'氧气泄漏', desc:'管道系统出现裂缝导致氧气泄漏，需紧急修复。',
     good:false, weight:2,
     apply(){
       const loss = 20 + Math.floor(Math.random()*30);
@@ -1886,7 +1903,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('地球援助'), desc:T('地球总部空投了补给包！获得随机资源。'),
+    title:'地球援助', desc:'地球总部空投了补给包！获得随机资源。',
     good:true, weight:2,
     apply(){
       G.res.food = Math.min(G.cap.food, G.res.food + 25);
@@ -1897,7 +1914,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('宇宙射线'), desc:T('异常宇宙射线影响了电子设备，损失部分科研点。'),
+    title:'宇宙射线', desc:'异常宇宙射线影响了电子设备，损失部分科研点。',
     good:false, weight:2,
     apply(){
       const loss = 15 + Math.floor(Math.random()*20);
@@ -1907,7 +1924,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('作物丰收'), desc:T('温室的月球改良土壤效果显著，粮食大丰收！'),
+    title:'作物丰收', desc:'温室的月球改良土壤效果显著，粮食大丰收！',
     good:true, weight:2,
     apply(){
       const amt = 40 + Math.floor(Math.random()*30);
@@ -1917,7 +1934,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('技术交流'), desc:T('其他月球站的技术专家来访，分享了一项技术。'),
+    title:'技术交流', desc:'其他月球站的技术专家来访，分享了一项技术。',
     good:true, weight:2,
     apply(){
       const amt = 25 + Math.floor(Math.random()*20);
@@ -1928,7 +1945,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('物资短缺'), desc:T('物流中断导致部分补给延误。'),
+    title:'物资短缺', desc:'物流中断导致部分补给延误。',
     good:false, weight:2,
     apply(){
       G.res.food = Math.max(0, G.res.food - 15);
@@ -1938,7 +1955,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('科研竞赛'), desc:T('全球月球科研竞赛开赛，实验室效率临时大增！'),
+    title:'科研竞赛', desc:'全球月球科研竞赛开赛，实验室效率临时大增！',
     good:true, weight:2,
     apply(){
       G.res.research += 50;
@@ -1948,7 +1965,7 @@ const EVENTS = [
     }
   },
   {
-    title:T('医疗紧急'), desc:T('一名船员突发急病！如有医务室将自动救治。'),
+    title:'医疗紧急', desc:'一名船员突发急病！如有医务室将自动救治。',
     good:false, weight:2,
     apply(){
       let hasMedbay = false;
@@ -1970,7 +1987,7 @@ const EVENTS = [
     filter(){ return G.crew.length > 0; }
   },
   {
-    title:T('雷达预警'), desc:T('雷达站提前探测到了陨石威胁，成功规避！'),
+    title:'雷达预警', desc:'雷达站提前探测到了陨石威胁，成功规避！',
     good:true, weight:2,
     apply(){
       let hasRadar = false;
@@ -2030,8 +2047,8 @@ function showTradeMenu(){
   html += '<div style="display:flex;flex-direction:column;gap:5px">';
   for(let i=0;i<offers.length;i++){
     const o = offers[i];
-    const giveName = RES.find(r=>r.key===o.give).name;
-    const getName = RES.find(r=>r.key===o.get).name;
+    const giveName = T(RES.find(r=>r.key===o.give).name);
+    const getName = T(RES.find(r=>r.key===o.get).name);
     const can = G.res[o.give] >= o.giveAmt;
     html += '<button class="evbtn" style="background:'+(can?'#2a3060':'#3a2020')+';color:'+(can?'#e8ecff':'#888')+'" data-trade="'+i+'" '+(can?'':'disabled')+'>'+o.giveAmt+' '+giveName+' → '+o.getAmt+' '+getName+'</button>';
   }
@@ -2058,9 +2075,9 @@ function showTradeMenu(){
 
 function showEventPopup(ev){
   const box = document.getElementById('evbox');
-  let html = '<h3>★ '+ev.title+' ★</h3>';
+  let html = '<h3>★ '+T(ev.title)+' ★</h3>';
   html += '<canvas id="evcanvas" width="48" height="48"></canvas>';
-  html += '<p>'+ev.desc+'</p>';
+  html += '<p>'+T(ev.desc)+'</p>';
   if(ev.custom === 'trade'){
     // 贸易选项（与贸易站菜单一致，含科技加成）
     const tradeMult = G.researchDone.trade2 ? 1.5 : 1;
@@ -2076,8 +2093,8 @@ function showEventPopup(ev){
     html += '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:10px">';
     for(let i=0;i<offers.length;i++){
       const o = offers[i];
-      const giveName = RES.find(r=>r.key===o.give).name;
-      const getName = RES.find(r=>r.key===o.get).name;
+      const giveName = T(RES.find(r=>r.key===o.give).name);
+      const getName = T(RES.find(r=>r.key===o.get).name);
       const can = G.res[o.give] >= o.giveAmt;
       html += '<button class="evbtn" style="background:'+(can?'#2a3060':'#3a2020')+';color:'+(can?'#e8ecff':'#888')+'" data-trade="'+i+'" '+(can?'':'disabled')+'>'+o.giveAmt+' '+giveName+' → '+o.getAmt+' '+getName+'</button>';
     }
@@ -2505,13 +2522,13 @@ function showBuildMenu(){
     if(!unlocked) continue;
     let canAfford = true;
     for(const k in def.cost) if(G.res[k] < def.cost[k]) canAfford = false;
-    const costStr = Object.entries(def.cost).map(([k,v])=>v+' '+RES.find(r=>r.key===k).name).join(' ');
+    const costStr = Object.entries(def.cost).map(([k,v])=>v+' '+T(RES.find(r=>r.key===k).name)).join(' ');
     const cnt = counts[key]||0;
     html += '<div class="bcard'+(canAfford?'':' cant')+'" data-build="'+key+'">';
     html += '<canvas width="32" height="32" data-spr="'+key+'"></canvas>';
-    html += '<div class="info"><div class="nm">'+def.name+(cnt>0?' <span style="color:var(--good);font-size:8px">×'+cnt+'</span>':'')+'</div>';
+    html += '<div class="info"><div class="nm">'+T(def.name)+(cnt>0?' <span style="color:var(--good);font-size:8px">×'+cnt+'</span>':'')+'</div>';
     html += '<div class="cost">'+costStr+'</div>';
-    html += '<div class="desc">'+def.desc+'</div></div></div>';
+    html += '<div class="desc">'+T(def.desc)+'</div></div></div>';
   }
   html += '</div>';
   showOverlay(html);
@@ -2533,7 +2550,7 @@ function showBuildMenu(){
       G.placeMode = key;
       hideOverlay();
       document.getElementById('btn-build').classList.add('on');
-      setInfo(T('选中：')+def.name+T('。点击地图放置，按建造键取消。'));
+      setInfo(T('选中：')+T(def.name)+T('。点击地图放置，按建造键取消。'));
       Sound.click();
     };
   });
@@ -2566,9 +2583,9 @@ function showResearchMenu(){
     if(done) cls = 'done';
     else if(can) cls = 'afford';
     html += '<div class="rcard '+cls+'" data-res="'+key+'">';
-    html += '<div class="info"><div class="nm">'+r.name+'</div>';
+    html += '<div class="info"><div class="nm">'+T(r.name)+'</div>';
     html += '<div class="cost">'+T('消耗')+': '+r.cost+' '+T('科研点')+'</div>';
-    html += '<div class="eff">'+r.desc+'</div>';
+    html += '<div class="eff">'+T(r.desc)+'</div>';
     if(done) html += '<div class="st" style="color:var(--good)">✓ '+T('已研发')+'</div>';
     html += '</div></div>';
   }
@@ -2589,7 +2606,7 @@ function showResearchMenu(){
           for(const b of G.grid) if(b && b.type==='habitat') G.colonistCap += r.boost.habitatCap;
         }
       }
-      toast(T('研发成功：')+r.name, 'good');
+      toast(T('研发成功：')+T(r.name), 'good');
       Sound.research();
       showResearchMenu();
     };
@@ -2606,7 +2623,7 @@ function showCrewMenu(){
   html += '<button class="mbtn" id="recruit-btn" '+(canRecruit?'':'disabled')+'>'+T('招募新船员')+' ('+recruitCost+' '+T('金币')+')</button>';
   html += '<div class="clist" style="margin-top:8px">';
   for(const c of G.crew){
-    const job = c.job!=null && G.grid[c.job] ? BDEF[G.grid[c.job].type].name : T('空闲');
+    const job = c.job!=null && G.grid[c.job] ? T(BDEF[G.grid[c.job].type].name) : T('空闲');
     html += '<div class="ccard">';
     html += '<canvas width="28" height="28" data-crew="'+c.id+'"></canvas>';
     html += '<div class="info"><div class="nm">'+c.name+'</div>';
@@ -2719,7 +2736,7 @@ function showMenu(){
     html += (G.achievements.has(id)?'✓':'○')+' '+name+' ('+desc+')<br>';
   }
   html += '</div></div>';
-  html += '<div class="mitem"><div class="t">'+T('重新开始')+'</div><div class="d">清除当前进度，重新开始游戏</div><button class="mbtn danger" id="reset-btn">'+T('重新开始')+'</button></div>';
+  html += '<div class="mitem"><div class="t">'+T('重新开始')+'</div><div class="d">'+T('清除当前进度，重新开始游戏')+'</div><button class="mbtn danger" id="reset-btn">'+T('重新开始')+'</button></div>';
   html += '</div>';
   showOverlay(html);
   // 计算资源动态
@@ -2762,7 +2779,7 @@ function showMenu(){
     const v = rates[r.key];
     const sign = v >= 0 ? '+' : '';
     const color = v >= 0 ? 'var(--good)' : 'var(--bad)';
-    rateHtml += r.name+': <b style="color:'+color+'">'+sign+v.toFixed(1)+'/s</b> · '+T('当前')+': <b>'+Math.floor(G.res[r.key])+'</b><br>';
+    rateHtml += T(r.name)+': <b style="color:'+color+'">'+sign+v.toFixed(1)+'/s</b> · '+T('当前')+': <b>'+Math.floor(G.res[r.key])+'</b><br>';
   }
   document.getElementById('res-stats').innerHTML = rateHtml;
   document.getElementById('sound-toggle').onclick = ()=>{
@@ -2830,16 +2847,16 @@ function showSelInfo(idx){
   const b = G.grid[idx];
   if(!b){ document.getElementById('selinfo').classList.remove('on'); return; }
   const def = BDEF[b.type];
-  let html = '<div class="sn">'+def.name+'</div>';
+  let html = '<div class="sn">'+T(def.name)+'</div>';
   html += '<div class="sd">';
   if(def.prod){
     for(const k in def.prod){
-      html += T('产 ')+def.prod[k].toFixed(1)+T('/秒 ')+RES.find(r=>r.key===k).name+' ';
+      html += T('产 ')+def.prod[k].toFixed(1)+T('/秒 ')+T(RES.find(r=>r.key===k).name)+' ';
     }
   }
   if(def.use){
     for(const k in def.use){
-      html += T('耗 ')+def.use[k].toFixed(2)+T('/秒 ')+RES.find(r=>r.key===k).name+' ';
+      html += T('耗 ')+def.use[k].toFixed(2)+T('/秒 ')+T(RES.find(r=>r.key===k).name)+' ';
     }
   }
   if(def.needCrew){
@@ -3117,7 +3134,7 @@ function onTap(g){
         document.getElementById('btn-build').classList.remove('on');
         setInfo(T('资源不足，已退出建造模式。'));
       } else {
-        setInfo(T('继续点击放置 ')+def.name+T('，或按建造键退出。'));
+        setInfo(T('继续点击放置 ')+T(def.name)+T('，或按建造键退出。'));
       }
     } else {
       toast(T('无法放置在此处'), 'bad');

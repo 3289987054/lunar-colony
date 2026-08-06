@@ -38,6 +38,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 补充产量/消耗/船员/建筑/科技/事件等状态行翻译
   - 补充新游戏引导提示、放置建筑提示翻译
 
+## [0.4.2] - 2026-08-07
+
+### Fixed
+- 🐛 **语言切换后无需刷新 / No page refresh needed after language switch**
+  - `setLang()` 现在自动检测并刷新打开的面板（建造/科研/船员/菜单/贸易）
+  - 选中建筑时切换语言也会实时刷新 `showSelInfo`
+  - `BDEF`/`RDEF` 的 `name`/`desc` 移除初始化时的 `T()` 包裹
+    改为裸字符串，避免字典加载前翻译失败
+  - 修复语言切换后部分文本不更新的问题
+
 ## [Unreleased]
 
 ### Planned

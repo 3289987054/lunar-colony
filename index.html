@@ -165,7 +165,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#060b14;font-family:
     <button class="lang-btn" data-lang="zh" style="background:#1a2030;color:#dae2f0;border:1px solid #26324a;padding:5px 14px;font-family:monospace;font-size:10px;cursor:pointer;border-radius:1px">中文</button>
     <button class="lang-btn" data-lang="en" style="background:#1a2030;color:#dae2f0;border:1px solid #26324a;padding:5px 14px;font-family:monospace;font-size:10px;cursor:pointer;border-radius:1px">English</button>
   </div>
-  <div class="tip" id="title-tip">在荒芜的月球上建立繁荣殖民地<br>管理 <b>7种资源</b> · 招募 <b>船员</b> · 研发 <b>24项科技</b><br>建造 <b>17种建筑</b> · 应对 <b>23种事件</b> · 建造 <b>月球核心</b> 达成胜利</div>
+  <div class="tip" id="title-tip">在荒芜的月球上建立繁荣殖民地<br>管理 <b>7种资源</b> · 招募 <b>船员</b> · 研发 <b>25项科技</b><br>建造 <b>18种建筑</b> · 应对 <b>25种事件</b> · 建造 <b>月球核心</b> 达成胜利</div>
 </div>
 <script>
 'use strict';
@@ -359,6 +359,17 @@ const I18N = {
     '新游戏开始。点击 <b>建造</b> 开始建设。': 'New game. Tap <b>Build</b> to start.',
     '继续点击放置 ': 'Tap to place ',
     '先建 <b>太阳能板</b> 和 <b>制氧机</b> 维持生存。建 <b>矿场</b>、<b>温室</b>、<b>实验室</b> 发展。<b>通讯塔</b> 触发事件后研发解锁更多建筑！': 'Build <b>Solar</b> + <b>O2 Gen</b> first. Then <b>Mine</b>, <b>Farm</b>, <b>Lab</b>. <b>Comm Tower</b> unlocks events + more!',
+    // New events
+    '太空垃圾': 'Space Debris', '轨道上坠落了一颗废弃卫星，回收获得大量矿物和能量！': 'A defunct satellite crashed! Salvaged for minerals and energy!',
+    '流浪者': 'Wanderer', '一个流浪宇航员请求加入你的殖民地！': 'A wandering astronaut wants to join your colony!',
+    '+%s 矿物 +%s 能量': '+%s Min +%s Eng',
+    '+%s ': '+%s ',
+    '居住舱已满！流浪者离开了': 'Habitat full! Wanderer left',
+    '+1 船员（流浪者）': '+1 Crew (Wanderer)',
+    // Spaceport
+    '太空港': 'Spaceport', '定期空投随机资源': 'Periodic supply drops',
+    '太空港建设': 'Spaceport', '解锁太空港（每60秒空投随机资源）': 'Unlock Spaceport (supply drop every 60s)',
+    '下次空投': 'Next drop in', '秒': 's',
   }
 };
 function T(zh){
@@ -549,6 +560,7 @@ const BDEF = {
   waterpur:    {name:'水循环站',desc:'减少50%氧气消耗', cost:{mineral:30,credit:65}, use:{energy:0.06}, oxygenSave:0.5, col:'#7ad7ff', tech:'watertech'},
   droidbay:    {name:'机器人车间',desc:'自动产矿物 无需船员', cost:{mineral:50,credit:100}, prod:{mineral:0.35}, use:{energy:0.18}, col:'#c9a0ff', tech:'droidtech'},
   radar:       {name:'雷达站',  desc:'探测陨石 减少事件损失', cost:{mineral:35,credit:85}, use:{energy:0.12}, shield:0.5, col:'#5fe8a8', tech:'shieldtech'},
+  spaceport:   {name:'太空港',  desc:'定期空投随机资源', cost:{mineral:80,credit:150,research:100}, flag:'spaceport', col:'#9ae0ff', tech:'spaceporttech'},
 };
 
 // ---- 科技定义 ----
@@ -577,6 +589,7 @@ const RDEF = {
   medbay2: {name:'高级医疗', cost:180, desc:'医务室治疗效率翻倍', boost:{heal:2}},
   robot2:  {name:'智能采矿', cost:200, desc:'机器人车间产量翻倍', boost:{droid:2}},
   radar2:  {name:'深空预警', cost:170, desc:'雷达站保护提升至90%', boost:{shield:0.9}},
+  spaceporttech:{name:'太空港建设', cost:250, desc:'解锁太空港（每60秒空投随机资源）', unlock:'spaceporttech'},
 };
 
 // ---- 资源定义 ----
@@ -603,7 +616,7 @@ function newGame(){
     placeMode:null, // building key
     selected:null, // selected tile index
     hover:null,
-    unlocked:{rtg:false,comm:false,rec:false,core:false,medtech:false,obstech:false,watertech:false,droidtech:false,shieldtech:false},
+    unlocked:{rtg:false,comm:false,rec:false,core:false,medtech:false,obstech:false,watertech:false,droidtech:false,shieldtech:false,spaceporttech:false},
     researchDone:{},
     morale:70,
     nextCrewId:1,
@@ -745,6 +758,7 @@ function drawBuilding(type, x, y, t, anim){
     case 'waterpur': drawWaterpur(x,y,t); break;
     case 'droidbay': drawDroidbay(x,y,t); break;
     case 'radar': drawRadar(x,y,t); break;
+    case 'spaceport': drawSpaceport(x,y,t); break;
   }
   ctx.restore();
 }
@@ -1167,6 +1181,40 @@ function drawRadar(x,y,t){
   px(x+4, y+26, 8, 6, '#1a1a28');
   px(x+4, y+26, 8, 1, C.green);
   px(x+6+blip*1, y+28, 2, 1, C.green);
+}
+
+function drawSpaceport(x,y,t){
+  // 发射台基座
+  px(x+4, y+28, 32, 8, C.metalDark);
+  px(x+4, y+28, 32, 2, C.metal);
+  // 控制塔
+  px(x+28, y+18, 8, 12, C.metal);
+  px(x+28, y+18, 8, 2, C.metalLight);
+  px(x+30, y+20, 4, 3, C.glassDark);
+  px(x+31, y+21, 2, 1, C.green);
+  // 跑道
+  px(x+6, y+30, 20, 4, '#1a1a28');
+  px(x+8, y+31, 2, 1, C.yellow);
+  px(x+14, y+31, 2, 1, C.yellow);
+  px(x+20, y+31, 2, 1, C.yellow);
+  // 灯柱
+  const blink = (t%20)<10;
+  px(x+4, y+24, 2, 4, blink?C.yellow:'#443300');
+  px(x+34, y+24, 2, 4, blink?C.red:'#330000');
+  // 火箭/飞船（上下浮动）
+  const bob = Math.sin(t*0.05)*2;
+  const rx = x+14, ry = y+10+bob;
+  px(rx+2, ry, 4, 8, C.metalLight);
+  px(rx+2, ry, 4, 2, C.yellow);
+  px(rx+3, ry+8, 2, 3, C.orange);
+  // 火焰
+  if((t%10)<7){
+    px(rx+3, ry+11, 2, 2, C.red);
+    px(rx+3, ry+12, 2, 1, C.yellow);
+  }
+  // 鳍
+  px(rx, ry+4, 2, 4, C.metal);
+  px(rx+6, ry+4, 2, 4, C.metal);
 }
 
 // 辅助：像素圆
@@ -1614,6 +1662,22 @@ function tickResources(dt){
       if(G.healTimer >= 5 && G.morale < 85) G.morale = Math.min(100, G.morale + healMult * 0.5 * dt);
       healActive = true;
     }
+    if(b.type==='spaceport'){
+      // 每60秒空投随机资源
+      if(!b.dropTimer) b.dropTimer = 0;
+      b.dropTimer += dt;
+      if(b.dropTimer >= 60){
+        b.dropTimer = 0;
+        const drops = ['mineral','food','energy','credit','research'];
+        const drop = drops[Math.floor(Math.random()*drops.length)];
+        const amt = 20 + Math.floor(Math.random()*30);
+        G.res[drop] = Math.min(G.cap[drop]||9999, G.res[drop] + amt);
+        const rname = T(RES.find(r=>r.key===drop).name);
+        floatText(canvasW/2, canvasH/2, TF('+%s ', amt) + rname, C.good);
+        Sound.coin();
+        spawnParticles(0,0,'spark');
+      }
+    }
   }
   // 船员消耗
   const crewCount = G.crew.length;
@@ -1750,7 +1814,7 @@ function checkAchievements(){
 // ---- 事件系统 ----
 const EVENTS = [
   {
-    title:'陨石撞击', desc:'一颗陨石击中了基地！部分建筑受损。',
+    title:'陨石撞击', desc:'一颗陨石击中了基地！部分建筑受损。', icon:'meteor',
     good:false, weight:3,
     apply(){
       const buildings = [];
@@ -1764,7 +1828,7 @@ const EVENTS = [
     }
   },
   {
-    title:'冰矿发现', desc:'勘探队发现了地下冰矿！获得大量矿物。',
+    title:'冰矿发现', desc:'勘探队发现了地下冰矿！获得大量矿物。', icon:'ice',
     good:true, weight:3,
     apply(){
       const amt = 30 + Math.floor(Math.random()*30);
@@ -1774,7 +1838,7 @@ const EVENTS = [
     }
   },
   {
-    title:'太阳能风暴', desc:'太阳活动剧烈，太阳能板效率大增！',
+    title:'太阳能风暴', desc:'太阳活动剧烈，太阳能板效率大增！', icon:'solar',
     good:true, weight:2,
     apply(){
       G.res.energy = Math.min(G.cap.energy, G.res.energy + 50);
@@ -1783,11 +1847,11 @@ const EVENTS = [
     }
   },
   {
-    title:'贸易商船', desc:'地球贸易船到达，可用金币换取资源。',
+    title:'贸易商船', desc:'地球贸易船到达，可用金币换取资源。', icon:'trade',
     good:true, weight:3, custom:'trade',
   },
   {
-    title:'新移民', desc:'一批新移民希望加入殖民地！',
+    title:'新移民', desc:'一批新移民希望加入殖民地！', icon:'immigrant',
     good:true, weight:3,
     apply(){
       const names = [T('伽马'),T('德尔塔'),T('艾普西龙'),T('泽塔'),T('伊塔'),T('西塔'),T('艾欧塔'),T('卡帕')];
@@ -1800,7 +1864,7 @@ const EVENTS = [
     }
   },
   {
-    title:'设备故障', desc:'一台设备出现故障，损失部分能量。',
+    title:'设备故障', desc:'一台设备出现故障，损失部分能量。', icon:'failure',
     good:false, weight:2,
     apply(){
       G.res.energy = Math.max(0, G.res.energy - 30);
@@ -1809,7 +1873,7 @@ const EVENTS = [
     }
   },
   {
-    title:'科学突破', desc:'研究人员取得了重大突破！获得科研点。',
+    title:'科学突破', desc:'研究人员取得了重大突破！获得科研点。', icon:'research',
     good:true, weight:2,
     apply(){
       const amt = 20 + Math.floor(Math.random()*20);
@@ -1819,7 +1883,7 @@ const EVENTS = [
     }
   },
   {
-    title:'月面日出', desc:'壮丽的地球升起，船员士气大振！',
+    title:'月面日出', desc:'壮丽的地球升起，船员士气大振！', icon:'sunrise',
     good:true, weight:2,
     apply(){
       G.morale = Math.min(100, G.morale + 20);
@@ -1828,7 +1892,7 @@ const EVENTS = [
     }
   },
   {
-    title:'月震', desc:'轻微月震震动了基地，部分资源散落。',
+    title:'月震', desc:'轻微月震震动了基地，部分资源散落。', icon:'quake',
     good:false, weight:2,
     apply(){
       const loss = 10 + Math.floor(Math.random()*15);
@@ -1839,7 +1903,7 @@ const EVENTS = [
     }
   },
   {
-    title:'富矿脉发现', desc:'采矿场发现了富矿脉，矿物产量临时大增！',
+    title:'富矿脉发现', desc:'采矿场发现了富矿脉，矿物产量临时大增！', icon:'ore',
     good:true, weight:2,
     apply(){
       const amt = 40 + Math.floor(Math.random()*40);
@@ -1849,7 +1913,7 @@ const EVENTS = [
     }
   },
   {
-    title:'船员训练', desc:'一名船员完成了专项训练，能力提升！',
+    title:'船员训练', desc:'一名船员完成了专项训练，能力提升！', icon:'training',
     good:true, weight:2,
     apply(){
       if(G.crew.length===0) return;
@@ -1862,7 +1926,7 @@ const EVENTS = [
     }
   },
   {
-    title:'沙暴来袭', desc:'月面沙暴覆盖了太阳能板，能量暂停恢复。',
+    title:'沙暴来袭', desc:'月面沙暴覆盖了太阳能板，能量暂停恢复。', icon:'sandstorm',
     good:false, weight:2,
     apply(){
       G.res.energy = Math.max(0, G.res.energy - 20);
@@ -1872,7 +1936,7 @@ const EVENTS = [
     }
   },
   {
-    title:'月面探测', desc:'月球车发现了稀有氦-3矿藏！获得大量科研点。',
+    title:'月面探测', desc:'月球车发现了稀有氦-3矿藏！获得大量科研点。', icon:'rover',
     good:true, weight:2,
     apply(){
       const amt = 30 + Math.floor(Math.random()*40);
@@ -1882,7 +1946,7 @@ const EVENTS = [
     }
   },
   {
-    title:'殖民地节日', desc:'今天是殖民地成立纪念日，船员们举行了小型庆祝活动！',
+    title:'殖民地节日', desc:'今天是殖民地成立纪念日，船员们举行了小型庆祝活动！', icon:'festival',
     good:true, weight:2,
     apply(){
       G.morale = Math.min(100, G.morale + 15);
@@ -1892,7 +1956,7 @@ const EVENTS = [
     }
   },
   {
-    title:'氧气泄漏', desc:'管道系统出现裂缝导致氧气泄漏，需紧急修复。',
+    title:'氧气泄漏', desc:'管道系统出现裂缝导致氧气泄漏，需紧急修复。', icon:'leak',
     good:false, weight:2,
     apply(){
       const loss = 20 + Math.floor(Math.random()*30);
@@ -1903,7 +1967,7 @@ const EVENTS = [
     }
   },
   {
-    title:'地球援助', desc:'地球总部空投了补给包！获得随机资源。',
+    title:'地球援助', desc:'地球总部空投了补给包！获得随机资源。', icon:'aid',
     good:true, weight:2,
     apply(){
       G.res.food = Math.min(G.cap.food, G.res.food + 25);
@@ -1914,7 +1978,7 @@ const EVENTS = [
     }
   },
   {
-    title:'宇宙射线', desc:'异常宇宙射线影响了电子设备，损失部分科研点。',
+    title:'宇宙射线', desc:'异常宇宙射线影响了电子设备，损失部分科研点。', icon:'cosmic',
     good:false, weight:2,
     apply(){
       const loss = 15 + Math.floor(Math.random()*20);
@@ -1924,7 +1988,7 @@ const EVENTS = [
     }
   },
   {
-    title:'作物丰收', desc:'温室的月球改良土壤效果显著，粮食大丰收！',
+    title:'作物丰收', desc:'温室的月球改良土壤效果显著，粮食大丰收！', icon:'harvest',
     good:true, weight:2,
     apply(){
       const amt = 40 + Math.floor(Math.random()*30);
@@ -1934,7 +1998,7 @@ const EVENTS = [
     }
   },
   {
-    title:'技术交流', desc:'其他月球站的技术专家来访，分享了一项技术。',
+    title:'技术交流', desc:'其他月球站的技术专家来访，分享了一项技术。', icon:'exchange',
     good:true, weight:2,
     apply(){
       const amt = 25 + Math.floor(Math.random()*20);
@@ -1945,7 +2009,7 @@ const EVENTS = [
     }
   },
   {
-    title:'物资短缺', desc:'物流中断导致部分补给延误。',
+    title:'物资短缺', desc:'物流中断导致部分补给延误。', icon:'shortage',
     good:false, weight:2,
     apply(){
       G.res.food = Math.max(0, G.res.food - 15);
@@ -1955,7 +2019,7 @@ const EVENTS = [
     }
   },
   {
-    title:'科研竞赛', desc:'全球月球科研竞赛开赛，实验室效率临时大增！',
+    title:'科研竞赛', desc:'全球月球科研竞赛开赛，实验室效率临时大增！', icon:'contest',
     good:true, weight:2,
     apply(){
       G.res.research += 50;
@@ -1965,7 +2029,7 @@ const EVENTS = [
     }
   },
   {
-    title:'医疗紧急', desc:'一名船员突发急病！如有医务室将自动救治。',
+    title:'医疗紧急', desc:'一名船员突发急病！如有医务室将自动救治。', icon:'medical',
     good:false, weight:2,
     apply(){
       let hasMedbay = false;
@@ -1987,7 +2051,7 @@ const EVENTS = [
     filter(){ return G.crew.length > 0; }
   },
   {
-    title:'雷达预警', desc:'雷达站提前探测到了陨石威胁，成功规避！',
+    title:'雷达预警', desc:'雷达站提前探测到了陨石威胁，成功规避！', icon:'radar',
     good:true, weight:2,
     apply(){
       let hasRadar = false;
@@ -2004,6 +2068,35 @@ const EVENTS = [
         Sound.alert();
       }
     }
+  },
+  {
+    title:'太空垃圾', desc:'轨道上坠落了一颗废弃卫星，回收获得大量矿物和能量！',
+    good:true, weight:1, icon:'rover',
+    apply(){
+      const m = 50 + Math.floor(Math.random()*50);
+      const e = 30 + Math.floor(Math.random()*30);
+      G.res.mineral = Math.min(G.cap.mineral, G.res.mineral + m);
+      G.res.energy = Math.min(G.cap.energy, G.res.energy + e);
+      floatText(canvasW/2, canvasH/2, TF('+%s 矿物 +%s 能量', m, e), C.good);
+      Sound.coin();
+    }
+  },
+  {
+    title:'流浪者', desc:'一个流浪宇航员请求加入你的殖民地！',
+    good:true, weight:1, icon:'immigrant',
+    apply(){
+      if(G.crew.length >= (G.colonistCap||0)){
+        floatText(canvasW/2, canvasH/2, T('居住舱已满！流浪者离开了'), C.bad);
+        return;
+      }
+      const stats = ['mining','farming','science','eng'];
+      const s = {};
+      for(const st of stats) s[st] = 2 + Math.floor(Math.random()*4);
+      addCrew(T('流浪者')+' '+Math.floor(Math.random()*999), s);
+      floatText(canvasW/2, canvasH/2, T('+1 船员（流浪者）'), C.good);
+      Sound.success();
+    },
+    filter(){ return G.crew.length < (G.colonistCap||0); }
   },
 ];
 
@@ -2147,184 +2240,67 @@ function closeEvent(){
 function drawEventIcon(c, ev){
   c.fillStyle = '#0a0e1a';
   c.fillRect(0,0,48,48);
-  if(ev.icon === 'meteor'){
-    c.fillStyle = C.crater;
-    c.fillRect(8,8,32,32);
-    c.fillStyle = '#1a1820';
-    c.fillRect(12,12,24,24);
-    c.fillStyle = C.orange;
-    c.fillRect(20,4,8,8);
-    c.fillStyle = C.yellow;
-    c.fillRect(22,2,4,4);
-  } else if(ev.icon === 'ice'){
-    c.fillStyle = C.purpleDark;
-    c.fillRect(10,20,28,16);
-    c.fillStyle = C.purple;
-    c.fillRect(14,16,8,8);
-    c.fillRect(26,14,8,10);
-    c.fillStyle = '#fff';
-    c.fillRect(16,18,2,2);
-    c.fillRect(28,16,2,2);
-  } else if(ev.icon === 'solar'){
-    c.fillStyle = C.sun;
-    c.fillRect(16,16,16,16);
-    c.fillStyle = C.sunCore;
-    c.fillRect(20,20,8,8);
-    c.fillStyle = C.yellow;
-    c.fillRect(8,22,6,4);
-    c.fillRect(34,22,6,4);
-    c.fillRect(22,8,4,6);
-    c.fillRect(22,34,4,6);
-  } else if(ev.icon === 'trade'){
-    c.fillStyle = C.metal;
-    c.fillRect(8,20,32,12);
-    c.fillStyle = C.yellow;
-    c.fillRect(12,24,8,4);
-    c.fillRect(24,24,8,4);
-    c.fillStyle = C.earth;
-    c.fillRect(20,4,8,8);
-  } else if(ev.icon === 'immigrant'){
-    c.fillStyle = C.suit;
-    c.fillRect(18,12,12,20);
-    c.fillStyle = C.visor;
-    c.fillRect(20,14,8,6);
-    c.fillStyle = C.metalDark;
-    c.fillRect(18,32,4,4);
-    c.fillRect(26,32,4,4);
-  } else if(ev.icon === 'failure'){
-    c.fillStyle = C.red;
-    c.fillRect(20,8,8,8);
-    c.fillStyle = C.yellow;
-    c.fillRect(22,10,4,4);
-    c.fillStyle = C.metalDark;
-    c.fillRect(12,20,24,16);
-    c.fillStyle = C.red;
-    c.fillRect(16,24,4,4);
-    c.fillRect(28,24,4,4);
-    c.fillRect(22,30,4,2);
-  } else if(ev.icon === 'research'){
-    c.fillStyle = C.glass;
-    c.fillRect(12,12,24,24);
-    c.fillStyle = C.glassLight;
-    c.fillRect(14,14,8,4);
-    c.fillStyle = C.green;
-    c.fillRect(18,22,4,4);
-    c.fillRect(26,22,4,4);
-    c.fillStyle = C.yellow;
-    c.fillRect(22,28,4,2);
-  } else if(ev.icon === 'sunrise'||ev.icon === 'sunrise'){
-    c.fillStyle = C.earth;
-    c.fillRect(8,28,32,12);
-    c.fillStyle = C.earthLand;
-    c.fillRect(12,30,8,4);
-    c.fillRect(26,32,6,4);
-    c.fillStyle = C.sun;
-    c.fillRect(20,8,8,8);
-    c.fillStyle = C.sunCore;
-    c.fillRect(22,10,4,4);
-  } else if(ev.icon === 'quake'){
-    c.fillStyle = C.regolith2;
-    c.fillRect(4,20,40,20);
-    c.fillStyle = C.crater;
-    c.fillRect(10,24,12,8);
-    c.fillStyle = '#1a1820';
-    c.fillRect(12,26,8,4);
-    c.fillStyle = C.red;
-    c.fillRect(28,22,4,4);
-    c.fillRect(36,28,3,3);
-    c.fillStyle = C.yellow;
-    c.fillRect(6,14,4,2);
-    c.fillRect(38,14,4,2);
-  } else if(ev.icon === 'ice'){
-    c.fillStyle = C.purpleDark;
-    c.fillRect(6,14,36,24);
-    c.fillStyle = C.purple;
-    c.fillRect(10,10,8,8);
-    c.fillRect(22,8,10,10);
-    c.fillRect(30,18,8,8);
-    c.fillStyle = '#fff';
-    c.fillRect(12,12,2,2);
-    c.fillRect(24,10,2,2);
-    c.fillRect(32,20,2,2);
-    c.fillStyle = C.yellow;
-    c.fillRect(16,22,4,4);
-  } else if(ev.icon === 'immigrant'){
-    c.fillStyle = C.suit;
-    c.fillRect(16,10,16,24);
-    c.fillStyle = C.visor;
-    c.fillRect(18,12,12,8);
-    c.fillStyle = C.yellow;
-    c.fillRect(22,14,4,4);
-    c.fillStyle = C.green;
-    c.fillRect(8,30,6,6);
-    c.fillRect(34,30,6,6);
-    c.fillStyle = C.greenDark;
-    c.fillRect(8,34,6,2);
-    c.fillRect(34,34,6,2);
-  } else if(ev.icon === 'solar'){
-    c.fillStyle = C.regolith3;
-    c.fillRect(0,16,48,24);
-    c.fillStyle = C.regolithDark;
-    c.fillRect(0,28,48,12);
-    c.fillStyle = C.dust;
-    for(let i=0;i<12;i++){
-      const dx=(i*7+3)%44, dy=10+(i*5)%20;
-      c.fillRect(dx,dy,3,1);
-    }
-    c.fillStyle = C.yellow;
-    c.fillRect(8,8,6,4);
-    c.fillRect(34,10,6,4);
-  
-  } else if(ev.icon === 'research'||ev.icon === 'research'||ev.icon === 'research'){
-    c.fillStyle = C.purpleDark; c.fillRect(8,20,32,16);
-    c.fillStyle = C.purple; c.fillRect(12,16,8,8); c.fillRect(28,14,8,10);
-    c.fillStyle = C.yellow; c.fillRect(20,8,8,8);
-    c.fillStyle = C.sunCore; c.fillRect(22,10,4,4);
-    c.fillStyle = '#fff'; c.fillRect(14,18,2,2); c.fillRect(30,16,2,2);
-    c.fillStyle = C.green; c.fillRect(10,30,6,2); c.fillRect(32,28,6,2);
-  } else if(ev.icon === 'sunrise'||ev.icon === 'sunrise'){
+  const I = ev.icon;
+  if(I === 'meteor'){
+    c.fillStyle = C.crater; c.fillRect(8,8,32,32);
+    c.fillStyle = '#1a1820'; c.fillRect(12,12,24,24);
+    c.fillStyle = C.orange; c.fillRect(20,4,8,8);
+    c.fillStyle = C.yellow; c.fillRect(22,2,4,4);
+  } else if(I === 'ice'){
+    c.fillStyle = C.purpleDark; c.fillRect(6,14,36,24);
+    c.fillStyle = C.purple; c.fillRect(10,10,8,8); c.fillRect(22,8,10,10); c.fillRect(30,18,8,8);
+    c.fillStyle = '#fff'; c.fillRect(12,12,2,2); c.fillRect(24,10,2,2); c.fillRect(32,20,2,2);
+    c.fillStyle = C.yellow; c.fillRect(16,22,4,4);
+  } else if(I === 'solar'){
+    c.fillStyle = C.sun; c.fillRect(16,16,16,16);
+    c.fillStyle = C.sunCore; c.fillRect(20,20,8,8);
+    c.fillStyle = C.yellow; c.fillRect(8,22,6,4); c.fillRect(34,22,6,4); c.fillRect(22,8,4,6); c.fillRect(22,34,4,6);
+  } else if(I === 'trade'){
+    c.fillStyle = C.metal; c.fillRect(8,20,32,12);
+    c.fillStyle = C.yellow; c.fillRect(12,24,8,4); c.fillRect(24,24,8,4);
+    c.fillStyle = C.earth; c.fillRect(20,4,8,8);
+  } else if(I === 'immigrant'){
+    c.fillStyle = C.suit; c.fillRect(16,10,16,24);
+    c.fillStyle = C.visor; c.fillRect(18,12,12,8);
+    c.fillStyle = C.yellow; c.fillRect(22,14,4,4);
+    c.fillStyle = C.green; c.fillRect(8,30,6,6); c.fillRect(34,30,6,6);
+    c.fillStyle = C.greenDark; c.fillRect(8,34,6,2); c.fillRect(34,34,6,2);
+  } else if(I === 'failure'){
+    c.fillStyle = C.metalDark; c.fillRect(6,10,36,28);
+    c.fillStyle = C.metal; c.fillRect(8,12,32,4);
+    c.fillStyle = C.red; c.fillRect(12,22,4,4); c.fillRect(22,20,4,6); c.fillRect(32,22,4,4);
+    c.fillStyle = C.bad; c.fillRect(8,30,32,4); c.fillRect(8,34,32,2);
+    for(let j=0;j<6;j++){ c.fillRect(10+j*5,26,2,2); }
+    c.fillStyle = '#1a1a28'; c.fillRect(14,16,20,2);
+  } else if(I === 'research'){
+    c.fillStyle = C.glassDark; c.fillRect(6,10,36,24);
+    c.fillStyle = C.glass; c.fillRect(8,12,32,20);
+    c.fillStyle = C.green; c.fillRect(12,16,8,4); c.fillRect(28,16,8,4);
+    c.fillStyle = C.yellow; c.fillRect(18,6,12,6); c.fillRect(20,4,8,4);
+    c.fillStyle = C.sunCore; c.fillRect(22,2,4,4);
+    c.fillStyle = '#fff'; c.fillRect(14,18,2,1); c.fillRect(30,18,2,1);
+    c.fillStyle = C.red; c.fillRect(18,24,4,4); c.fillRect(26,24,4,4); c.fillRect(22,28,4,2);
+  } else if(I === 'sunrise'){
     c.fillStyle = C.sunCore; c.fillRect(16,8,16,16);
     c.fillStyle = C.yellow; c.fillRect(20,4,8,8);
     c.fillStyle = C.metal; c.fillRect(8,24,32,8);
     c.fillStyle = C.red; c.fillRect(12,28,4,4); c.fillRect(24,28,8,4); c.fillRect(36,28,2,4);
     c.fillStyle = C.earth; c.fillRect(8,32,32,4);
     c.fillStyle = '#fff'; c.fillRect(18,6,4,2); c.fillRect(28,28,2,2);
-  } else if(ev.icon === 'failure'||ev.icon === 'failure'){
-    c.fillStyle = C.metalDark; c.fillRect(8,14,32,20);
-    c.fillStyle = C.glass; c.fillRect(14,20,6,8); c.fillRect(28,20,6,8);
-    c.fillStyle = C.glassLight;
-    for(let j=0;j<8;j+=2){ c.fillRect(18+j,24,1,2); }
-    c.fillStyle = C.metalDark; c.fillRect(8,28,32,6);
-    c.fillStyle = C.red; c.fillRect(18,22,2,2); c.fillRect(30,20,3,3);
-    c.fillStyle = C.bad;
-    for(let j=0;j<6;j++){ c.fillRect(16+j*3,30+j%2*2,1,1); }
-  } else if(ev.icon === 'aid'||ev.icon === 'aid'||ev.icon === 'aid'){
-    c.fillStyle = C.earth; c.fillRect(6,6,20,12);
-    c.fillStyle = C.earthLand; c.fillRect(8,8,8,4); c.fillRect(20,10,4,4);
-    c.fillStyle = C.earthCloud; c.fillRect(10,6,6,2);
-    c.fillStyle = C.metal; c.fillRect(18,22,12,20);
-    c.fillStyle = C.yellow; c.fillRect(20,26,8,4); c.fillRect(24,34,4,4);
-    c.fillStyle = C.red; c.fillRect(16,38,4,2); c.fillRect(28,38,4,2);
-    c.fillStyle = C.green; c.fillRect(8,32,6,4); c.fillRect(36,30,4,6);
-    c.fillStyle = '#fff'; c.fillRect(22,28,2,1); c.fillRect(26,36,2,1);
-  } else if(ev.icon === 'research'||ev.icon === 'research'){
-    c.fillStyle = C.glass; c.fillRect(8,16,32,16);
-    c.fillStyle = C.glassLight; c.fillRect(10,18,6,4);
-    c.fillStyle = C.green; c.fillRect(20,20,4,4); c.fillRect(30,20,4,4);
-    c.fillStyle = C.yellow;
-    for(let j=0;j<5;j++){ c.fillRect(10+j*8,10,2,6); }
-    c.fillStyle = C.red; c.fillRect(14,22,2,2); c.fillRect(34,22,2,2);
-    c.fillStyle = '#1a1a28'; c.fillRect(18,14,12,4);
-    c.fillStyle = C.bad; for(let j=0;j<4;j++){ c.fillRect(20+j*4,15,1,2); }
-  } else if(ev.icon === 'aid'||ev.icon === 'aid'){
-    c.fillStyle = C.greenDark; c.fillRect(8,24,32,12);
-    c.fillStyle = C.green; c.fillRect(10,20,28,6);
-    c.fillStyle = C.yellow; c.fillRect(14,16,6,6); c.fillRect(28,14,6,8);
-    c.fillStyle = '#fff'; c.fillRect(16,17,2,2); c.fillRect(30,15,2,2);
-    c.fillStyle = C.green; for(let j=0;j<5;j++){ c.fillRect(4+j*4,28,2,8); c.fillRect(38-j*4,28,2,8); }
-    c.fillStyle = C.sunCore; c.fillRect(18,8,12,10);
-    c.fillStyle = C.yellow; c.fillRect(22,4,4,6);
-  } else if(ev.icon === 'research'||ev.icon === 'research'){
+  } else if(I === 'quake'){
+    c.fillStyle = C.regolith2; c.fillRect(4,20,40,20);
+    c.fillStyle = C.crater; c.fillRect(10,24,12,8);
+    c.fillStyle = '#1a1820'; c.fillRect(12,26,8,4);
+    c.fillStyle = C.red; c.fillRect(28,22,4,4); c.fillRect(36,28,3,3);
+    c.fillStyle = C.yellow; c.fillRect(6,14,4,2); c.fillRect(38,14,4,2);
+  } else if(I === 'ore'){
+    c.fillStyle = C.purpleDark; c.fillRect(8,20,32,16);
+    c.fillStyle = C.purple; c.fillRect(12,16,8,8); c.fillRect(28,14,8,10);
+    c.fillStyle = C.yellow; c.fillRect(20,8,8,8);
+    c.fillStyle = C.sunCore; c.fillRect(22,10,4,4);
+    c.fillStyle = '#fff'; c.fillRect(14,18,2,2); c.fillRect(30,16,2,2);
+    c.fillStyle = C.green; c.fillRect(10,30,6,2); c.fillRect(32,28,6,2);
+  } else if(I === 'training'){
     c.fillStyle = C.metal; c.fillRect(6,6,20,16);
     c.fillStyle = C.metalLight; c.fillRect(8,8,16,3);
     c.fillStyle = C.glassDark; c.fillRect(10,14,12,4);
@@ -2333,31 +2309,14 @@ function drawEventIcon(c, ev){
     c.fillStyle = C.visor; c.fillRect(22,26,4,3); c.fillRect(34,30,4,3);
     c.fillStyle = C.yellow; c.fillRect(28,14,10,6); c.fillRect(30,16,6,2);
     c.fillStyle = C.good; c.fillRect(30,8,8,4); c.fillRect(32,6,4,2);
-  } else if(ev.icon === 'failure'||ev.icon === 'failure'||ev.icon === 'failure'){
-    c.fillStyle = C.metalDark; c.fillRect(6,10,36,28);
-    c.fillStyle = C.metal; c.fillRect(8,12,32,4);
-    c.fillStyle = C.red; c.fillRect(12,22,4,4); c.fillRect(22,20,4,6); c.fillRect(32,22,4,4);
-    c.fillStyle = C.bad; c.fillRect(8,30,32,4); c.fillRect(8,34,32,2);
-    for(let j=0;j<6;j++){ c.fillRect(10+j*5,26,2,2); }
-    c.fillStyle = '#1a1a28'; c.fillRect(14,16,20,2);
-  } else if(ev.icon === 'research'||ev.icon === 'research'){
-    c.fillStyle = C.glassDark; c.fillRect(6,10,36,24);
-    c.fillStyle = C.glass; c.fillRect(8,12,32,20);
-    c.fillStyle = C.green; c.fillRect(12,16,8,4); c.fillRect(28,16,8,4);
-    c.fillStyle = C.yellow; c.fillRect(18,6,12,6); c.fillRect(20,4,8,4);
-    c.fillStyle = C.sunCore; c.fillRect(22,2,4,4);
-    c.fillStyle = '#fff'; c.fillRect(14,18,2,1); c.fillRect(30,18,2,1);
-    c.fillStyle = C.red; c.fillRect(18,24,4,4); c.fillRect(26,24,4,4); c.fillRect(22,28,4,2);
-  } else if(ev.icon === 'failure'||ev.icon === 'failure'){
-    c.fillStyle = C.metal; c.fillRect(8,8,32,32);
-    c.fillStyle = C.red; c.fillRect(18,12,12,2); c.fillRect(23,7,2,12);
-    c.fillStyle = C.glassDark; c.fillRect(12,18,24,16);
-    c.fillStyle = C.green; c.fillRect(14,20,4,2); c.fillRect(22,20,6,4);
-    c.fillStyle = C.red; c.fillRect(30,20,4,4); c.fillRect(30,26,4,4);
-    c.fillStyle = C.bad; c.fillRect(14,26,14,4);
-    c.fillStyle = '#1a1a28'; c.fillRect(16,30,10,2);
-    c.fillStyle = '#fff'; c.fillRect(24,22,2,1);
-  } else if(ev.icon === 'meteor'||ev.icon === 'meteor'){
+  } else if(I === 'sandstorm'){
+    c.fillStyle = C.regolith3; c.fillRect(0,16,48,24);
+    c.fillStyle = C.regolithDark; c.fillRect(0,28,48,12);
+    c.fillStyle = C.dust;
+    for(let j=0;j<12;j++){ c.fillRect((j*7+3)%44, 10+(j*5)%20, 3,1); }
+    c.fillStyle = C.yellow; c.fillRect(8,8,6,4); c.fillRect(34,10,6,4);
+    c.fillStyle = C.red; c.fillRect(20,22,8,2);
+  } else if(I === 'rover'){
     c.fillStyle = C.metal; c.fillRect(8,12,32,12);
     c.fillStyle = C.glassDark; c.fillRect(12,16,24,4);
     c.fillStyle = C.green; c.fillRect(14,18,4,2); c.fillRect(22,18,6,2); c.fillRect(30,18,4,2);
@@ -2366,7 +2325,91 @@ function drawEventIcon(c, ev){
     c.fillStyle = C.good; c.fillRect(26,6,8,4);
     c.fillStyle = '#fff'; c.fillRect(28,6,2,2);
     c.fillStyle = C.yellow; c.fillRect(18,28,8,8); c.fillRect(20,30,4,4);
-    c.fillStyle = C.green; for(let j=0;j<3;j++){ c.fillRect(6+j*10,28,2,8); c.fillRect(38-j*10,28,2,8); }} else {
+    c.fillStyle = C.green;
+    for(let j=0;j<3;j++){ c.fillRect(6+j*10,28,2,8); c.fillRect(38-j*10,28,2,8); }
+  } else if(I === 'festival'){
+    c.fillStyle = C.sunCore; c.fillRect(16,8,16,16);
+    c.fillStyle = C.yellow; c.fillRect(20,4,8,8);
+    c.fillStyle = C.metal; c.fillRect(8,24,32,8);
+    c.fillStyle = C.red; c.fillRect(12,28,4,4); c.fillRect(24,28,8,4); c.fillRect(36,28,2,4);
+    c.fillStyle = C.earth; c.fillRect(8,32,32,4);
+    c.fillStyle = C.green; c.fillRect(4,32,4,8); c.fillRect(40,32,4,8);
+    c.fillStyle = '#fff'; c.fillRect(18,6,4,2);
+  } else if(I === 'leak'){
+    c.fillStyle = C.metal; c.fillRect(8,8,32,32);
+    c.fillStyle = C.glassDark; c.fillRect(12,18,24,16);
+    c.fillStyle = C.green; c.fillRect(14,20,4,2); c.fillRect(22,20,6,4);
+    c.fillStyle = C.red; c.fillRect(30,20,4,4); c.fillRect(30,26,4,4);
+    c.fillStyle = C.bad; c.fillRect(14,26,14,4);
+    c.fillStyle = '#1a1a28'; c.fillRect(16,30,10,2);
+    c.fillStyle = C.red; c.fillRect(18,12,12,2); c.fillRect(23,7,2,12);
+    c.fillStyle = '#fff'; c.fillRect(24,22,2,1);
+  } else if(I === 'aid'){
+    c.fillStyle = C.greenDark; c.fillRect(8,24,32,12);
+    c.fillStyle = C.green; c.fillRect(10,20,28,6);
+    c.fillStyle = C.yellow; c.fillRect(14,16,6,6); c.fillRect(28,14,6,8);
+    c.fillStyle = '#fff'; c.fillRect(16,17,2,2); c.fillRect(30,15,2,2);
+    c.fillStyle = C.green;
+    for(let j=0;j<5;j++){ c.fillRect(4+j*4,28,2,8); c.fillRect(38-j*4,28,2,8); }
+    c.fillStyle = C.sunCore; c.fillRect(18,8,12,10);
+    c.fillStyle = C.yellow; c.fillRect(22,4,4,6);
+  } else if(I === 'cosmic'){
+    c.fillStyle = '#0a0e1a'; c.fillRect(0,0,48,48);
+    c.fillStyle = C.purple; c.fillRect(10,10,4,4); c.fillRect(34,14,3,3); c.fillRect(24,6,2,2);
+    c.fillStyle = C.yellow; c.fillRect(8,8,2,2); c.fillRect(36,30,2,2); c.fillRect(20,36,2,2);
+    c.fillStyle = C.red; c.fillRect(22,20,4,4); c.fillRect(16,24,3,3);
+    c.fillStyle = C.glassDark; c.fillRect(14,28,20,8);
+    c.fillStyle = C.red; c.fillRect(18,30,2,2); c.fillRect(28,32,2,2);
+    c.fillStyle = C.bad; c.fillRect(20,34,8,1);
+  } else if(I === 'harvest'){
+    c.fillStyle = C.greenDark; c.fillRect(4,20,40,20);
+    c.fillStyle = C.green; c.fillRect(8,16,8,8); c.fillRect(20,12,8,10); c.fillRect(32,16,8,8);
+    c.fillStyle = C.yellow; c.fillRect(12,14,4,4); c.fillRect(24,10,4,4); c.fillRect(36,14,4,4);
+    c.fillStyle = C.sun; c.fillRect(20,2,8,8);
+    c.fillStyle = C.sunCore; c.fillRect(22,4,4,4);
+    c.fillStyle = '#fff'; c.fillRect(14,16,1,1); c.fillRect(26,12,1,1); c.fillRect(38,16,1,1);
+  } else if(I === 'exchange'){
+    c.fillStyle = C.metal; c.fillRect(6,14,36,20);
+    c.fillStyle = C.glass; c.fillRect(10,18,10,12); c.fillRect(28,18,10,12);
+    c.fillStyle = C.green; c.fillRect(12,20,6,2); c.fillRect(30,20,6,2);
+    c.fillStyle = C.yellow; c.fillRect(22,16,4,4);
+    c.fillStyle = C.glassLight;
+    for(let j=0;j<8;j+=2){ c.fillRect(22+j,22,1,4); }
+    c.fillStyle = C.good; c.fillRect(20,10,8,4); c.fillRect(22,8,4,2);
+  } else if(I === 'shortage'){
+    c.fillStyle = C.metalDark; c.fillRect(8,14,32,20);
+    c.fillStyle = C.metal; c.fillRect(8,14,32,4);
+    c.fillStyle = C.red; c.fillRect(14,22,4,4); c.fillRect(24,20,4,6); c.fillRect(32,22,4,4);
+    c.fillStyle = C.bad; c.fillRect(8,30,32,4);
+    c.fillStyle = '#1a1a28'; c.fillRect(14,16,20,2);
+    c.fillStyle = C.yellow; c.fillRect(20,38,8,4);
+  } else if(I === 'contest'){
+    c.fillStyle = C.glass; c.fillRect(8,16,32,16);
+    c.fillStyle = C.glassLight; c.fillRect(10,18,6,4);
+    c.fillStyle = C.green; c.fillRect(20,20,4,4); c.fillRect(30,20,4,4);
+    c.fillStyle = C.yellow;
+    for(let j=0;j<5;j++){ c.fillRect(10+j*8,10,2,6); }
+    c.fillStyle = C.sunCore; c.fillRect(22,4,4,4);
+    c.fillStyle = C.red; c.fillRect(14,22,2,2); c.fillRect(34,22,2,2);
+  } else if(I === 'medical'){
+    c.fillStyle = C.metal; c.fillRect(8,8,32,32);
+    c.fillStyle = C.red; c.fillRect(18,12,12,2); c.fillRect(23,7,2,12);
+    c.fillStyle = C.glassDark; c.fillRect(12,18,24,16);
+    c.fillStyle = C.green; c.fillRect(14,20,4,2); c.fillRect(22,20,6,4);
+    c.fillStyle = C.red; c.fillRect(30,20,4,4); c.fillRect(30,26,4,4);
+    c.fillStyle = C.bad; c.fillRect(14,26,14,4);
+    c.fillStyle = '#1a1a28'; c.fillRect(16,30,10,2);
+    c.fillStyle = '#fff'; c.fillRect(24,22,2,1);
+  } else if(I === 'radar'){
+    c.fillStyle = C.metalDark; c.fillRect(16,20,16,20);
+    c.fillStyle = C.metal; c.fillRect(18,22,12,16);
+    c.fillStyle = C.good; c.fillRect(24,8,8,4); c.fillRect(26,6,4,2);
+    c.fillStyle = C.green; c.fillRect(24,10,4,6);
+    c.fillStyle = C.yellow;
+    for(let j=0;j<3;j++){ c.fillRect(8+j*2,8+j*4,2,2); c.fillRect(40-j*2,8+j*4,2,2); }
+    c.fillStyle = C.red; c.fillRect(36,14,3,3);
+    c.fillStyle = '#fff'; c.fillRect(22,28,2,2);
+  } else {
     c.fillStyle = C.yellow;
     c.fillRect(16,16,16,16);
     c.fillStyle = '#fff';
@@ -2866,6 +2909,10 @@ function showSelInfo(idx){
     }
   }
   if(def.cap && def.cap.colonist) html += '<br>'+T('提供居住')+': +'+def.cap.colonist;
+  if(b.type==='spaceport' && b.dropTimer != null){
+    const remain = Math.max(0, 60 - Math.floor(b.dropTimer));
+    html += '<br>'+T('下次空投')+': '+remain+T('秒');
+  }
   html += '</div>';
   if(def.needCrew){
     html += '<div class="act"><button class="asg" data-idx="'+idx+'">'+T('分配船员')+'</button><button class="del" data-del="'+idx+'">'+T('拆除')+'</button></div>';
@@ -3300,7 +3347,7 @@ document.querySelectorAll('.lang-btn').forEach(btn=>{
     const h1 = document.getElementById('title-h1');
     if(h1) h1.textContent = T('月球基地');
     const tip = document.getElementById('title-tip');
-    if(tip) tip.innerHTML = T('在荒芜的月球上建立繁荣殖民地')+'<br>'+T('管理')+' <b>7'+T('种资源')+'</b> · '+T('招募')+' <b>'+T('船员')+'</b> · '+T('研发')+' <b>24'+T('项科技')+'</b><br>'+T('建造')+' <b>17'+T('种建筑')+'</b> · '+T('应对')+' <b>23'+T('种事件')+'</b> · '+T('建造')+' <b>'+T('月球核心')+'</b> '+T('达成胜利');
+    if(tip) tip.innerHTML = T('在荒芜的月球上建立繁荣殖民地')+'<br>'+T('管理')+' <b>7'+T('种资源')+'</b> · '+T('招募')+' <b>'+T('船员')+'</b> · '+T('研发')+' <b>25'+T('项科技')+'</b><br>'+T('建造')+' <b>18'+T('种建筑')+'</b> · '+T('应对')+' <b>25'+T('种事件')+'</b> · '+T('建造')+' <b>'+T('月球核心')+'</b> '+T('达成胜利');
     const sb = document.getElementById('start-btn');
     if(sb){const sl=sb.querySelector('.btn-label');if(sl)sl.textContent=T('开始建造');}
     const ml = document.getElementById('morale-label');

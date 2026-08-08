@@ -23,6 +23,16 @@
 
 ---
 
+<p align="center">
+  <em>English</em><br>
+  <img src="./docs/screenshots/game-en.png" alt="Lunar Colony English Screenshot" width="480">
+</p>
+
+<p align="center">
+  <em>简体中文</em><br>
+  <img src="./docs/screenshots/game-zh.png" alt="月球基地中文截图" width="480">
+</p>
+
 ## 🎮 游戏特色 / Features
 
 | 系统 | 描述 / Description |

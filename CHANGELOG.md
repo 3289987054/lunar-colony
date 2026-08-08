@@ -48,6 +48,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     改为裸字符串，避免字典加载前翻译失败
   - 修复语言切换后部分文本不更新的问题
 
+## [0.4.3] - 2026-08-08
+
+### Fixed
+- 🐛 **事件图标修复 / Event Icon Bug Fix**
+  - 23 个事件全部缺少 `icon` 属性，导致 `drawEventIcon` 始终走 else 分支画黄色方块
+  - 给每个事件添加了对应的 `icon` 类型（meteor/ice/solar/trade/immigrant/failure/research 等）
+
+### Changed
+- 🎨 **drawEventIcon 代码清理**
+  - 229 行重复分支压缩为 80 行（ice×2、research×5、failure×4 等重复定义合并）
+  - 每个 icon 保留一个定义，新增 13 个缺失的 icon 分支
+
+### Added
+- 🚀 **2 个新事件（25 种）**
+  - 太空垃圾：废弃卫星坠落，回收获得矿物+能量
+  - 流浪者：流浪宇航员请求加入（需有居住舱空位）
+- 🏗 **新建筑 + 新科技**
+  - 太空港（第 18 种建筑）：每 60 秒自动空投随机资源
+  - 含像素绘图：发射台、控制塔、跑道、浮动火箭+火焰
+  - 太空港建设（第 25 项科技）：解锁太空港建造
+
 ## [Unreleased]
 
 ### Planned

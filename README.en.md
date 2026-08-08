@@ -19,6 +19,10 @@ A single-file HTML pixel-art colony simulation game. **Zero dependencies, just o
 
 ---
 
+<p align="center">
+  <img src="./docs/screenshots/game-en.png" alt="Lunar Colony English Screenshot" width="480">
+</p>
+
 ## 🎮 Features
 
 | System | Description |

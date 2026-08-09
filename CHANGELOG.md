@@ -69,6 +69,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 含像素绘图：发射台、控制塔、跑道、浮动火箭+火焰
   - 太空港建设（第 25 项科技）：解锁太空港建造
 
+## [0.4.4] - 2026-08-09
+
+### Added
+- 🏗️ **建造菜单分类 / Build Menu Categories**
+  - 18 种建筑分为「基础/高级/终极」三组，带分类标题
+  - 资源不足时红色标注具体缺什么资源
+- ☀️ **白天/夜晚指示 / Day-Night Indicator**
+  - 时间后面加太阳/月亮图标，一眼看出太阳能板是否工作
+- 👤 **招募船员预览 / Crew Recruit Preview**
+  - 招募按钮下方显示下一个船员的名字和四维属性
+  - 预览值即实际招募值，不再盲抽
+- 🏆 **新成就：太空枢纽 / New Achievement: Space Hub**
+  - 建造太空港解锁，成就总数 15→16
+- 📋 **事件日志 / Event Log**
+  - 菜单新增事件日志面板，显示最近 8 条事件（✅/❌ + 日期 + 标题）
+
+### Changed
+- 💰 **资源不足具体提示 / Specific Resource Shortage Hint**
+  - 建造时资源不足从"资源不足！"改为"资源不足！(矿物不足)"等具体提示
+
 ## [Unreleased]
 
 ### Planned

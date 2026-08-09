@@ -370,6 +370,13 @@ const I18N = {
     '太空港': 'Spaceport', '定期空投随机资源': 'Periodic supply drops',
     '太空港建设': 'Spaceport', '解锁太空港（每60秒空投随机资源）': 'Unlock Spaceport (supply drop every 60s)',
     '下次空投': 'Next drop in', '秒': 's',
+    '基础': 'Basic', '高级': 'Advanced', '终极': 'Ultimate',
+    '不足': 'short',
+    '预览': 'Preview',
+    '太空枢纽': 'Space Hub', '建造太空港': 'Build Spaceport',
+    '金币不足！': 'Not enough credits!',
+    '事件日志': 'Event Log',
+    '新船员': 'New crew',
   }
 };
 function T(zh){
@@ -643,6 +650,7 @@ function newGame(){
     expired:0, // 已过期积分累计
     healTimer:0, // 医疗计时器
     stats:{totalBuilt:0, totalResearched:0, totalEvents:0, totalRecruited:0, startTime:Date.now()},
+    eventLog:[], // 最近事件记录
   };
   for(const r of RES){ G.res[r.key]=r.start; G.cap[r.key]=r.cap; }
   // 重新生成地形
@@ -1809,6 +1817,9 @@ function checkAchievements(){
   for(let i=0;i<G.grid.length;i++){
     if(G.grid[i] && G.grid[i].type==='core'){ add('core', T('核心启动')); break; }
   }
+  for(let i=0;i<G.grid.length;i++){
+    if(G.grid[i] && G.grid[i].type==='spaceport'){ add('spaceport', T('太空枢纽')); break; }
+  }
 }
 
 // ---- 事件系统 ----
@@ -2118,6 +2129,10 @@ function triggerEvent(){
   for(const e of pool){ r -= (e.weight||1); if(r<=0){ ev=e; break; } }
   if(!ev) ev = pool[0];
   G.currentEvent = ev;
+  // 记录事件日志
+  if(!G.eventLog) G.eventLog = [];
+  G.eventLog.unshift({day:G.day, title:ev.title, good:ev.good});
+  if(G.eventLog.length > 20) G.eventLog.pop();
   showEventPopup(ev);
   G.nextEventDay = G.day + 3 + Math.floor(Math.random()*4);
   G.events++;
@@ -2535,6 +2550,12 @@ function updateHUD(){
   const mf = document.getElementById('moralefill');
   mf.style.width = G.morale+'%';
   mf.style.background = G.morale>60?C.green : G.morale>30?C.yellow : C.red;
+  // 白天/夜晚指示
+  const dayTime = isDay();
+  const timeEl = document.getElementById('timetxt');
+  if(timeEl){
+    timeEl.textContent = String(hour).padStart(2,'0')+':'+String(min).padStart(2,'0')+(dayTime?' ☀':' 🌙');
+  }
 }
 
 function toast(msg, type){
@@ -2558,22 +2579,36 @@ function showBuildMenu(){
   // 统计各类建筑数量
   const counts = {};
   for(const b of G.grid) if(b) counts[b.type] = (counts[b.type]||0)+1;
-  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>'+T('建造')+'</h2><div class="blist">';
-  for(const key in BDEF){
-    const def = BDEF[key];
-    const unlocked = def.unlock || G.unlocked[def.tech];
-    if(!unlocked) continue;
-    let canAfford = true;
-    for(const k in def.cost) if(G.res[k] < def.cost[k]) canAfford = false;
-    const costStr = Object.entries(def.cost).map(([k,v])=>v+' '+T(RES.find(r=>r.key===k).name)).join(' ');
-    const cnt = counts[key]||0;
-    html += '<div class="bcard'+(canAfford?'':' cant')+'" data-build="'+key+'">';
-    html += '<canvas width="32" height="32" data-spr="'+key+'"></canvas>';
-    html += '<div class="info"><div class="nm">'+T(def.name)+(cnt>0?' <span style="color:var(--good);font-size:8px">×'+cnt+'</span>':'')+'</div>';
-    html += '<div class="cost">'+costStr+'</div>';
-    html += '<div class="desc">'+T(def.desc)+'</div></div></div>';
+  // 分类：基础 / 高级 / 终极
+  const cats = [
+    {key:'basic', label:T('基础'), items:['habitat','solar','oxygen','mine','greenhouse','lab','storage']},
+    {key:'adv', label:T('高级'), items:['rtg','comm','rec','tradepost','medbay','observatory','waterpur','droidbay','radar']},
+    {key:'ultimate', label:T('终极'), items:['core','spaceport']},
+  ];
+  let html = '<span class="close-x" onclick="hideOverlay()">✕</span><h2>'+T('建造')+'</h2>';
+  for(const cat of cats){
+    const visibleItems = cat.items.filter(key=>{
+      const def = BDEF[key];
+      return def && (def.unlock || G.unlocked[def.tech]);
+    });
+    if(visibleItems.length === 0) continue;
+    html += '<div style="color:var(--fui-cyan);font-size:9px;font-weight:bold;letter-spacing:1px;margin:6px 0 3px;padding-bottom:2px;border-bottom:1px solid #1a2540;">'+cat.label+'</div>';
+    html += '<div class="blist">';
+    for(const key of visibleItems){
+      const def = BDEF[key];
+      let canAfford = true;
+      let missing = [];
+      for(const k in def.cost){ if(G.res[k] < def.cost[k]){ canAfford = false; missing.push(T(RES.find(r=>r.key===k).name)); } }
+      const costStr = Object.entries(def.cost).map(([k,v])=>v+' '+T(RES.find(r=>r.key===k).name)).join(' ');
+      const cnt = counts[key]||0;
+      html += '<div class="bcard'+(canAfford?'':' cant')+'" data-build="'+key+'">';
+      html += '<canvas width="32" height="32" data-spr="'+key+'"></canvas>';
+      html += '<div class="info"><div class="nm">'+T(def.name)+(cnt>0?' <span style="color:var(--good);font-size:8px">×'+cnt+'</span>':'')+'</div>';
+      html += '<div class="cost">'+costStr+(canAfford?'':' <span style="color:var(--bad)">('+missing.join('/')+T('不足')+')</span>')+'</div>';
+      html += '<div class="desc">'+T(def.desc)+'</div></div></div>';
+    }
+    html += '</div>';
   }
-  html += '</div>';
   showOverlay(html);
   // 绘制建筑预览
   document.querySelectorAll('[data-spr]').forEach(cv=>{
@@ -2588,8 +2623,9 @@ function showBuildMenu(){
       const key = card.dataset.build;
       const def = BDEF[key];
       let can = true;
-      for(const k in def.cost) if(G.res[k] < def.cost[k]) can = false;
-      if(!can){ toast(T('资源不足！'), 'bad'); Sound.error(); return; }
+      let missing = [];
+      for(const k in def.cost){ if(G.res[k] < def.cost[k]){ can = false; missing.push(T(RES.find(r=>r.key===k).name)); } }
+      if(!can){ toast(T('资源不足！')+'('+missing.join('/')+T('不足')+')', 'bad'); Sound.error(); return; }
       G.placeMode = key;
       hideOverlay();
       document.getElementById('btn-build').classList.add('on');
@@ -2663,7 +2699,19 @@ function showCrewMenu(){
   let recruitCost = 50 + G.crew.length*20;
   if(G.researchDone.recruit) recruitCost = Math.floor(recruitCost * 0.7);
   const canRecruit = G.res.credit >= recruitCost && G.crew.length < (G.colonistCap||0);
+  // 预览下一个船员属性
+  if(!G._recruitPreview || G._recruitPreview.used){
+    G._recruitPreview = {
+      name: [T('伽马'),T('德尔塔'),T('艾普西龙'),T('泽塔'),T('伊塔'),T('西塔'),T('艾欧塔'),T('卡帕'),T('拉姆'),T('缪')][Math.floor(Math.random()*10)],
+      stats: {mining:1+Math.floor(Math.random()*4), farming:1+Math.floor(Math.random()*4), science:1+Math.floor(Math.random()*4), eng:1+Math.floor(Math.random()*4)},
+      used: false
+    };
+  }
+  const pv = G._recruitPreview;
   html += '<button class="mbtn" id="recruit-btn" '+(canRecruit?'':'disabled')+'>'+T('招募新船员')+' ('+recruitCost+' '+T('金币')+')</button>';
+  if(canRecruit){
+    html += '<div style="font-size:8px;color:var(--dim);text-align:center;margin:3px 0 6px;">'+T('预览')+': '+pv.name+' '+T('采矿')+pv.stats.mining+' '+T('务农')+pv.stats.farming+' '+T('科研')+pv.stats.science+' '+T('工程')+pv.stats.eng+'</div>';
+  }
   html += '<div class="clist" style="margin-top:8px">';
   for(const c of G.crew){
     const job = c.job!=null && G.grid[c.job] ? T(BDEF[G.grid[c.job].type].name) : T('空闲');
@@ -2694,13 +2742,12 @@ function showCrewMenu(){
     ctx = oldCtx;
   });
   document.getElementById('recruit-btn').onclick = ()=>{
-    if(G.res.credit < recruitCost) return;
+    if(G.res.credit < recruitCost){ toast(T('金币不足！'), 'bad'); Sound.error(); return; }
     if(G.crew.length >= (G.colonistCap||0)){ toast(T('居住舱不足！'), 'bad'); Sound.error(); return; }
     G.res.credit -= recruitCost;
-    const names = [T('伽马'),T('德尔塔'),T('艾普西龙'),T('泽塔'),T('伊塔'),T('西塔'),T('艾欧塔'),T('卡帕'),T('拉姆'),T('缪')];
-    const n = names[Math.floor(Math.random()*names.length)];
-    const stats = {mining:1+Math.floor(Math.random()*4), farming:1+Math.floor(Math.random()*4), science:1+Math.floor(Math.random()*4), eng:1+Math.floor(Math.random()*4)};
-    addCrew(n+' '+Math.floor(Math.random()*100), stats);
+    const pv = G._recruitPreview || {name:T('新船员'), stats:{mining:1,farming:1,science:1,eng:1}};
+    addCrew(pv.name+' '+Math.floor(Math.random()*100), pv.stats);
+    pv.used = true;
     G.stats.totalRecruited++;
     toast(T('新船员加入！'), 'good');
     Sound.recruit();
@@ -2774,11 +2821,21 @@ function showMenu(){
     ['build20',T('繁荣殖民地'),T('20座建筑')],
     ['medbay',T('医疗保障'),T('建造医务室')],
     ['radar',T('安全第一'),T('建造雷达站')],
+    ['spaceport',T('太空枢纽'),T('建造太空港')],
   ];
   for(const [id,name,desc] of achs){
     html += (G.achievements.has(id)?'✓':'○')+' '+name+' ('+desc+')<br>';
   }
   html += '</div></div>';
+  // 事件日志
+  if(G.eventLog && G.eventLog.length > 0){
+    html += '<div class="mitem"><div class="t">'+T('事件日志')+'</div><div class="d" style="font-size:9px;line-height:1.6;">';
+    for(const log of G.eventLog.slice(0, 8)){
+      const icon = log.good ? '✅' : '❌';
+      html += icon+' '+TF('第%s日', log.day)+' - '+T(log.title)+'<br>';
+    }
+    html += '</div></div>';
+  }
   html += '<div class="mitem"><div class="t">'+T('重新开始')+'</div><div class="d">'+T('清除当前进度，重新开始游戏')+'</div><button class="mbtn danger" id="reset-btn">'+T('重新开始')+'</button></div>';
   html += '</div>';
   showOverlay(html);

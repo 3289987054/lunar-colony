@@ -89,6 +89,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 💰 **资源不足具体提示 / Specific Resource Shortage Hint**
   - 建造时资源不足从"资源不足！"改为"资源不足！(矿物不足)"等具体提示
 
+## [0.4.5] - 2026-08-10
+
+### Added
+- 📊 **资源栏净产量箭头 / Net Production Arrows**
+  - 顶部每个资源后显示 ▲▼· 箭头，绿/红/灰三色
+  - 一眼看出哪些资源在增长、哪些在消耗
+- ⏩ **速度切换 toast 提示 / Speed Toggle Toast**
+  - 点击暂停/1x/3x/5x 时弹出当前速度提示
+
+### Changed
+- ♻️ **代码去重 / Code Dedup**
+  - 新增 `calcRates()` 统一计算函数
+  - 菜单"资源动态"面板复用同一函数（去重约 30 行代码）
+
 ## [Unreleased]
 
 ### Planned

@@ -103,6 +103,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - 新增 `calcRates()` 统一计算函数
   - 菜单"资源动态"面板复用同一函数（去重约 30 行代码）
 
+## [0.4.6] - 2026-08-11
+
+### Added
+- ⌨️ **键盘快捷键 toast 补全 / Keyboard Shortcut Toasts**
+  - 键盘按 0/1/3/5 切换速度时也显示"速度: 3x"提示（与按钮点击一致）
+- 💾 **存档/读档操作反馈 / Save/Load Feedback**
+  - 手动保存显示"已保存"，每日自动保存静默不刷屏
+  - 读档：无存档→"无存档"，成功→"已读取存档"，失败→"读取失败"
+- ⚠️ **资源危险预警 / Resource Danger Warning**
+  - 资源存量 <15 且净产量为负时，信息栏自动显示"⚠ 氧气 严重不足！"
+  - 只在无弹窗时覆盖，不打断操作
+
 ## [Unreleased]
 
 ### Planned

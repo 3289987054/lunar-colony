@@ -248,7 +248,7 @@ const I18N = {
     '日': '', '人': '', '座': '', '项': '', '个': '', '次': '',
     '清除当前进度，重新开始游戏': 'Reset progress',
     '保存进度到本地': 'Save locally',
-    '无存档': 'No save', '已保存': 'Saved', '已读取': 'Loaded',
+    '已读取': 'Loaded',
     '新游戏开始': 'New game', '已分配': 'Assigned', '已研发': 'Done',
     '资源不足！': 'Low resources!', '科研点不足！': 'Low research!',
     '居住舱不足！': 'Low habitat!', '没有空闲船员！': 'No free crew!',
@@ -379,6 +379,13 @@ const I18N = {
     '事件日志': 'Event Log',
     '新船员': 'New crew',
     '速度': 'Speed',
+    '已保存': 'Saved',
+    '保存失败': 'Save failed',
+    '无存档': 'No save data',
+    '已读取存档': 'Save loaded',
+    '读取失败': 'Load failed',
+    '严重不足！': ' critically low!',
+    ' 严重不足！': ' critically low!',
   }
 };
 function T(zh){
@@ -1776,7 +1783,7 @@ function onNewDay(){
   // 检查成就
   checkAchievements();
   // 每日自动保存
-  saveGame();
+  saveGame(true);
 }
 
 function checkWin(){
@@ -2601,6 +2608,27 @@ function updateHUD(){
   if(timeEl){
     timeEl.textContent = String(hour).padStart(2,'0')+':'+String(min).padStart(2,'0')+(dayTime?' ☀':' 🌙');
   }
+  // 资源危险预警
+  if(G && !G.paused && !G.gameOver){
+    let warnRes = [];
+    for(const r of RES){
+      if(r.key === 'expiry') continue;
+      const v = G.res[r.key];
+      const rate = _lastRates[r.key] || 0;
+      if(v < 15 && rate < -0.01){
+        warnRes.push(T(r.name));
+      }
+    }
+    const ib = document.getElementById('infobar');
+    if(ib && !document.getElementById('overlay').classList.contains('on') && !document.getElementById('eventpop').classList.contains('on')){
+      if(warnRes.length > 0){
+        ib.innerHTML = '⚠ '+warnRes.join(', ')+T(' 严重不足！');
+        ib.style.color = 'var(--bad)';
+      } else {
+        ib.style.color = '';
+      }
+    }
+  }
 }
 
 function toast(msg, type){
@@ -3058,18 +3086,21 @@ function demolish(idx){
 }
 
 // ---- 存档 ----
-function saveGame(){
+function saveGame(silent){
   try{
     const data = JSON.parse(JSON.stringify(G));
     data.achievements = Array.from(G.achievements);
     data.terrain = terrain;
     localStorage.setItem('lunarColony', JSON.stringify(data));
-  }catch(e){}
+    if(!silent) toast(T('已保存'), 'good');
+  }catch(e){
+    if(!silent) toast(T('保存失败'), 'bad');
+  }
 }
 function loadGame(){
   try{
     const s = localStorage.getItem('lunarColony');
-    if(!s) return false;
+    if(!s){ toast(T('无存档'), 'bad'); return false; }
     const data = JSON.parse(s);
     data.achievements = new Set(data.achievements||[]);
     if(data.terrain) terrain = data.terrain;
@@ -3079,8 +3110,9 @@ function loadGame(){
       if(v!=null) G.volume = parseFloat(v);
       G.musicOn = localStorage.getItem('lunarColonyMusic')==='1';
     }catch(e){}
+    toast(T('已读取存档'), 'good');
     return true;
-  }catch(e){ return false; }
+  }catch(e){ toast(T('读取失败'), 'bad'); return false; }
 }
 
 // ---- Game Over ----
@@ -3405,6 +3437,9 @@ document.addEventListener('keydown', (e)=>{
         b.classList.toggle('on', parseInt(b.dataset.spd)===spd);
       });
       Sound.click();
+      const spdLabels = ['‖', '1x', '3x', '5x'];
+      const spdIdx = [0,1,3,5].indexOf(spd);
+      if(spdIdx >= 0) toast(T('速度')+': '+spdLabels[spdIdx], '');
     }
   }
 });
